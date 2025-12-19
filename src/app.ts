@@ -3,6 +3,7 @@ import AuthRouter from "@/routes/auth.routes";
 import { swaggerSpec } from "./config/swagger";
 import swaggerUi from "swagger-ui-express";
 import { RateLimit } from "./lib/middleware/limiters";
+import errorHandler from "./lib/middleware/error/errorMiddleware";
 
 const app = express();
 
@@ -11,4 +12,5 @@ app.use("/docs",swaggerUi.serve,swaggerUi.setup(swaggerSpec))
 
 app.use("/auth",AuthRouter)
 
+app.use(errorHandler)
 export default app;
