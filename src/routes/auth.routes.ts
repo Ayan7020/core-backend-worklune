@@ -1,14 +1,16 @@
+import { AuthService } from "@/controllers/auth.controllers";
+import { asyncHandler } from "@/utils/asyncHandler";
 import express from "express";
 
 const router = express.Router();    
 
 /**
  * @openapi
- * /auth:
+ * /auth/signup:
  *   post:
- *     summary: Auth Check
+ *     summary: Signup in WorkLune 
  *     tags:
- *       - Tasks
+ *       - Auth
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -35,9 +37,6 @@ const router = express.Router();
  *       403:
  *         description: Forbidden
  */
-router.post("/login",(req, res) => {
-  res.status(201).json({ message: "Authenticated!!" });
-})
- ;
+router.post("/signup",asyncHandler(AuthService.Login))
 
 export default router;

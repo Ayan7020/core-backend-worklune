@@ -1,13 +1,24 @@
 import { AppError } from "@/utils/errors/AppError";
-import { InternalServerError } from "@/utils/errors/HttpErrors";
+import { BadRequestError, InternalServerError } from "@/utils/errors/HttpErrors";
 import { NextFunction, Request, Response } from "express"
+import { ZodError } from "zod";
 
 
-const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+const errorHandler = (err: unknown, req: Request, res: Response, next: NextFunction) => {
     let error = err;
     const isProduction = false;
     if (!(err instanceof AppError)) {
-        error = new InternalServerError();
+        if(err instanceof ZodError) {
+            const validationError = err.issues.map(issue => ({
+                field: issue.path.join("."),
+                message: issue.message
+            }));
+            error = new BadRequestError("Bad Request", {
+                validationError
+            });
+        } else {
+            error = new InternalServerError();
+        }
         if (!isProduction) {
             console.error("UNHANDLED ERROR:", err);
         }

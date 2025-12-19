@@ -2,8 +2,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import app from "./app";
-import { prisma } from "@/lib/prismInstance";
+import { prisma } from "@/services/prisma.service";
 import http from "http";
+import { emailQueueService } from "./utils/Queue";
 
 const PORT = Number(process.env.PORT) || 4000;
 
@@ -14,7 +15,9 @@ const startServer = async () => {
     await prisma.$connect();
     await prisma.$queryRaw`SELECT 1`;
     console.log("Database connected");
- 
+    
+    await emailQueueService.connect();
+
     server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
@@ -34,6 +37,8 @@ const shutdown = async (signal: string) => {
       await prisma.$disconnect();
       console.log("Prisma disconnected");
 
+      await emailQueueService.close();
+      console.log("Email Queue Service disconnected!");
       process.exit(0);
     });
   } else {
