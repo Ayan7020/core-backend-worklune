@@ -43,9 +43,9 @@ const errorHandler = (err: unknown, req: Request, res: Response, next: NextFunct
         }
         else {
             error = new InternalServerError();
-        }
-        if (!isProduction) {
-            console.error("[UNHANDLED ERROR]:", err);
+            if (!isProduction) {
+                console.error("[UNHANDLED ERROR]:", err);
+            }
         }
     }
     const appError = error as AppError; 
