@@ -20,15 +20,16 @@ const router = express.Router();
  *           schema:
  *             type: object
  *             required:
- *               - title
+ *               - email
+ *               - password
+ *               - name
  *             properties:
- *               title:
+ *               name:
  *                 type: string
- *               description:
+ *               email:
  *                 type: string
- *               priority:
- *                 type: string
- *                 enum: [LOW, MEDIUM, HIGH]
+ *               password:
+ *                 type: string 
  *     responses:
  *       201:
  *         description: Authenticated!!
@@ -37,6 +38,42 @@ const router = express.Router();
  *       403:
  *         description: Forbidden
  */
-router.post("/signup",asyncHandler(AuthService.Login))
+router.post("/signup",asyncHandler(AuthService.Signup))
+
+/**
+ * @openapi
+ * /auth/login:
+ *   post:
+ *     summary: Login in WorkLune 
+ *     tags:
+ *       - Auth
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string 
+ *     responses:
+ *       201:
+ *         description: Authenticated!!
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.post("/verify-otp",asyncHandler(AuthService.verifyOtpHandler));
 
 export default router;

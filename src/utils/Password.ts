@@ -1,6 +1,6 @@
 import crypto from "crypto";
 
-interface getPasswordHashReturn {
+export interface getPasswordHashReturn {
     salt: string,
     hash: string
 }

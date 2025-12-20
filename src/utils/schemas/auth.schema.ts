@@ -1,4 +1,4 @@
-import z, { email } from "zod";
+import z  from "zod";
 
 export const SignupSchema = z.object({
     name: z.string().min(4,"The name is too small!").max(10,"The name is too big!"),
@@ -13,4 +13,12 @@ export const SignupSchema = z.object({
     .regex(/^\S*$/, "Password must not contain spaces"),
 })
 
+export const LoginSchema = z.object({ 
+    email: z.email("Invalid email"),
+    password: z
+    .string()
+    .min(8, "Password must be at least 8 characters") 
+})
+
 export type SignupDTO = z.infer<typeof SignupSchema>
+export type LoginDTO = z.infer<typeof LoginSchema>
