@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql" 
 }
 
 model User {
@@ -11,7 +11,7 @@ model User {
   email         String    @unique
   name          String?
   avatarUrl     String?
-  emailVerified DateTime?
+  emailVerified DateTime? 
 
   passwordHash String?
   salt         String?

@@ -49,6 +49,18 @@ export class ValidationError extends AppError {
   }
 }
 
+export class ServiceUnavaialbleError extends AppError {
+  constructor(message?: string,details?: Record<string, unknown>) {
+    super(
+      message = "Service unaavailable please try again later!",
+      503,
+      ERROR_CODES.SERVICE_UNAVAILABLE,
+      true,
+      details
+    );
+  }
+}
+
 export class InternalServerError extends AppError {
   constructor() {
     super(

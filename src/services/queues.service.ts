@@ -1,12 +1,12 @@
+import { BadRequestError, ServiceUnavaialbleError } from '@/utils/errors/HttpErrors';
 import { sleep } from '@/utils/sleep';
-import amqp from 'amqplib';  
+import amqp from 'amqplib';
 
 export class RabbitMqService {
     private connection?: amqp.ChannelModel;
     private channel?: amqp.Channel;
 
     private readonly queue: string;
-    private readonly maxRetries: number;
     private readonly reconnectDelay: number;
 
     private isReconnecting = false;
@@ -17,8 +17,7 @@ export class RabbitMqService {
             throw new Error("Queue name must be present");
         }
         this.queue = queue.trim();
-        this.maxRetries = Number(process.env.QUEUE_RETRIES) || 5;
-        this.reconnectDelay = 10_000;
+        this.reconnectDelay = 30_000;  
     }
 
     public async connect(): Promise<amqp.Channel> {
@@ -30,6 +29,26 @@ export class RabbitMqService {
     public async close(): Promise<void> {
         this.isClosing = true;
         await this.cleanup();
+    }
+
+    public async insertDataToQueue(payload: string) {
+        if (!payload || !this.queue) {
+            throw new BadRequestError("Payload and queue name are required");
+        }
+
+        if (!this.channel || this.isReconnecting) {
+            throw new ServiceUnavaialbleError("Queue not connected")
+        }
+ 
+
+        const ok = this.channel?.sendToQueue(this.queue, Buffer.from(payload), {
+            persistent: true
+        });
+
+        if (!ok) {
+            throw new ServiceUnavaialbleError("Queue buffer full");
+        }
+        console.log(`[x] Sent: '${payload}' to queue '${this.queue}'`);
     }
 
     private async createConnection(): Promise<void> {
@@ -53,7 +72,7 @@ export class RabbitMqService {
                     console.error("RabbitMQ connection error:", err.message);
                     this.Reconnect();
                 }
-            }); 
+            });
 
             const channel = await connection.createChannel();
             await channel.assertQueue(this.queue, { durable: true });
@@ -72,9 +91,9 @@ export class RabbitMqService {
         if (this.isReconnecting) return;
         this.isReconnecting = true;
         console.log("Starting RabbitMQ reconnect loop");
-        for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+        while (!this.isClosing) {
             try {
-                console.log(`Reconnect attempt ${attempt}/${this.maxRetries}`);
+                console.log(`Reconnect...Queue!!`);
 
                 await this.cleanup();
                 await this.createConnection();
@@ -84,33 +103,29 @@ export class RabbitMqService {
                 return;
             } catch (err: any) {
                 console.error(
-                    `Reconnect attempt ${attempt} failed:`,
+                    `Reconnect Queue failed :`,
                     err?.message
                 );
-
-                if (attempt < this.maxRetries) {
-                    await sleep(this.reconnectDelay);
-                }
+                await sleep(this.reconnectDelay);
             }
         }
         this.isReconnecting = false;
         console.error("RabbitMQ unavailable after max retries");
-        process.exit(1);
     }
 
     private async cleanup(): Promise<void> {
         try {
             if (this.channel) {
-                await this.channel.close().catch(() => {});
+                await this.channel.close().catch(() => { });
                 this.channel = undefined;
             }
 
             if (this.connection) {
-                await this.connection.close().catch(() => {});
+                await this.connection.close().catch(() => { });
                 this.connection = undefined;
             }
         } catch {
-             
+
         }
     }
 }
