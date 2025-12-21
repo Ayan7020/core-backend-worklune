@@ -1,9 +1,9 @@
 import { prisma } from "@/services/prisma.service";
 import redisClient from "@/services/redis.service";
-import { OtpInterface, SendEmailPayload } from "@/types/common";
+import { SendEmailPayload } from "@/types/common";
 import { BadRequestError, InternalServerError, TooManyRequestError, UnauthorizedError } from "@/utils/errors/HttpErrors";
 import { generate4DigitOTP } from "@/utils/otp";
-import { getPasswordHash, getPasswordHashReturn, verifyPassword } from "@/utils/Password";
+import { getHash, verifyHash } from "@/utils/hashing";
 import { emailQueueService } from "@/utils/Queue";
 import { LoginSchema, SignupSchema } from "@/utils/schemas/auth.schema";
 import { Request, Response } from "express";
@@ -18,7 +18,7 @@ export class AuthService {
         }
         const signupBody = z.parse(SignupSchema, body);
 
-        const { salt, hash } = getPasswordHash(signupBody.password);
+        const { salt, hash } = getHash(signupBody.password);
 
         const resp = await prisma.user.create({
             data: {
@@ -34,7 +34,7 @@ export class AuthService {
         }
 
         const newOtp = generate4DigitOTP().toString();
-        const { hash: newHash, salt: newSalt } = getPasswordHash(newOtp);
+        const { hash: newHash, salt: newSalt } = getHash(newOtp);
         const OtpObj = {
             salt: newSalt,
             hash: newHash,
@@ -69,7 +69,7 @@ export class AuthService {
 
         const userOtp = String(body.otp);
 
-        const existingUserOtp = await redisClient.hgetall(REDIS_USER_KEY); 
+        const existingUserOtp = await redisClient.hgetall(REDIS_USER_KEY);
         if (!existingUserOtp || Object.keys(existingUserOtp).length === 0) {
             throw new UnauthorizedError("This OTP has expired. Please request a new one.!")
         }
@@ -77,13 +77,13 @@ export class AuthService {
         if (Number(existingUserOtp?.retry_limit) === 0) {
             await redisClient.del(REDIS_USER_KEY);
             throw new TooManyRequestError("You've reached the maximum number of OTP attempts. Please request a new OTP.")
-        }  
+        }
 
-        const isVerifiedOtp = verifyPassword(userOtp, existingUserOtp.hash, existingUserOtp.salt);
+        const isVerifiedOtp = verifyHash(userOtp, existingUserOtp.hash, existingUserOtp.salt);
         if (!isVerifiedOtp) {
             redisClient.hincrby(REDIS_USER_KEY, 'retry_limit', -1)
             throw new UnauthorizedError("The OTP you entered is incorrect. Please try again.");
-        } 
+        }
 
         await prisma.user.update({
             where: {
@@ -123,11 +123,14 @@ export class AuthService {
             throw new UnauthorizedError("Invalid authentication method!");
         }
 
-        const isUserVerify = verifyPassword(LoginBody.password, existingUser.passwordHash, existingUser.salt);
+        const isUserVerify = verifyHash(LoginBody.password, existingUser.passwordHash, existingUser.salt);
         if (!isUserVerify) {
             throw new UnauthorizedError("Wrong Password. Try again!");
-        }
+        };
 
-        
+        return res.status(201).json({
+            success: true,
+            message: "Login Successfull",
+        });
     }
 }
