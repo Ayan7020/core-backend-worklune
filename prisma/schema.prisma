@@ -21,7 +21,20 @@ model User {
   updatedAt DateTime @updatedAt
 
   memberships       Membership[]
-  createdWorkspaces Workspace[]  @relation("WorkspaceCreator")
+  createdWorkspaces Workspace[]   @relation("WorkspaceCreator")
+  refreshTokens     RefreshToken?
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @unique()
+  tokenHash String   @unique
+  salt      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Membership {

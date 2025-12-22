@@ -14,7 +14,7 @@ const errorHandler = (err: unknown, req: Request, res: Response, next: NextFunct
                 field: issue.path.join("."),
                 message: issue.message
             }));
-            error = new BadRequestError("Bad Request", {
+            error = new BadRequestError("Validation Error", {
                 validationError
             });
         } else if (err instanceof PrismaClientKnownRequestError) {

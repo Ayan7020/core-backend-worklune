@@ -42,7 +42,7 @@ router.post("/signup",asyncHandler(AuthService.Signup))
 
 /**
  * @openapi
- * /auth/login:
+ * /auth/verify-otp:
  *   post:
  *     summary: Login in WorkLune 
  *     tags:
@@ -75,5 +75,41 @@ router.post("/signup",asyncHandler(AuthService.Signup))
  *         description: Forbidden
  */
 router.post("/verify-otp",asyncHandler(AuthService.verifyOtpHandler));
+
+/**
+ * @openapi
+ * /auth/login:
+ *   post:
+ *     summary: Login in WorkLune 
+ *     tags:
+ *       - Auth
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string 
+ *     responses:
+ *       201:
+ *         description: Authenticated!!
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.post("/login",asyncHandler(AuthService.Login));
 
 export default router;

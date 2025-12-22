@@ -8,6 +8,7 @@ import { emailQueueService } from "@/utils/Queue";
 import { LoginSchema, SignupSchema } from "@/utils/schemas/auth.schema";
 import { Request, Response } from "express";
 import z from "zod";
+import { generateRefreshToken, signAccessToken, storedRefreshToken } from "@/utils/jwtHelper";
 
 
 export class AuthService {
@@ -99,7 +100,7 @@ export class AuthService {
         })
     }
 
-    public static Login = async (req: Request, res: Response) => {
+    public static Login = async (req: Request, res: Response) => {        
         const body = req.body;
         if (!body || typeof body !== "object") {
             throw new BadRequestError("body didn't found")
@@ -127,6 +128,32 @@ export class AuthService {
         if (!isUserVerify) {
             throw new UnauthorizedError("Wrong Password. Try again!");
         };
+
+        const payload = {
+            aud: "worklune-api",
+            sub: existingUser.id
+        };
+
+        const accessToken = signAccessToken(payload);
+        const refreshToken = generateRefreshToken();
+
+        await storedRefreshToken(refreshToken, existingUser.id);
+
+        res.cookie("access_token", accessToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            path: "/",
+            maxAge: 15 * 60 * 1000
+        });
+
+        res.cookie("refresh_token", refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            path: "/",
+            maxAge: 30 * 24 * 60 * 60 * 1000
+        });
 
         return res.status(201).json({
             success: true,
