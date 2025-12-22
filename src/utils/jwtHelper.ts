@@ -1,9 +1,12 @@
-import Jwt from "jsonwebtoken";
+import Jwt, { JsonWebTokenError, JwtPayload, TokenExpiredError } from "jsonwebtoken";
 import crypto from "crypto";
 import { prisma } from "@/services/prisma.service";
-import { getHash } from "./hashing";
+import { hashWithoutSalt } from "./hashing";
 
 const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    throw new Error("Provide the JWT Secret Key");
+};
 const ACCESS_TOKEN_TTL = "10m";
 
 export const signAccessToken = (payload: {
@@ -16,10 +19,6 @@ export const signAccessToken = (payload: {
         throw new Error("provide the payload for creating the jwt!");
     }
 
-    if (!JWT_SECRET) {
-        throw new Error("Provide the JWT Secret Key");
-    };
-
     const token = Jwt.sign(payload, JWT_SECRET, {
         issuer: "http://localhost:8000",
         expiresIn: ACCESS_TOKEN_TTL
@@ -27,6 +26,17 @@ export const signAccessToken = (payload: {
 
     return token;
 }
+
+
+export const verifyAccessToken = (token: string) => {
+    if (!token) {
+        throw new Error("Provide the token");
+    }
+
+    const payload = Jwt.verify(token, JWT_SECRET) as JwtPayload;
+    return payload;
+}
+
 
 export function generateRefreshToken() {
     return crypto.randomBytes(64).toString("hex");
@@ -37,7 +47,7 @@ export const storedRefreshToken = async (accessToken: string, userId: string) =>
         throw new Error("Provide the access token and user Id");
     }
 
-    const { salt, hash } = getHash(accessToken);
+    const hashAccessToken = hashWithoutSalt(accessToken);
 
     const existingUserRefreshToken = await prisma.refreshToken.findFirst({
         where: {
@@ -45,26 +55,26 @@ export const storedRefreshToken = async (accessToken: string, userId: string) =>
         }
     });
 
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
     if (!existingUserRefreshToken) {
         await prisma.refreshToken.create({
             data: {
-                tokenHash: hash,
-                salt: salt,
-                expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                tokenHash: hashAccessToken,
+                expiresAt: expiresAt,
                 userId: userId.trim()
             }
         });
         return;
-    } 
+    }
 
     await prisma.refreshToken.update({
         where: {
             userId: userId.trim()
         },
         data: {
-            tokenHash: hash,
-            salt: salt,
-            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 
+            tokenHash: hashAccessToken,
+            expiresAt: expiresAt,
         }
     });
     return;

@@ -5,17 +5,33 @@ export interface SendEmailPayload {
     subject?: string;
 }
 
- const OtpObj = {
-            salt: saltOtp,
-            hash: hashOtp,
-            retry_limit: 3
-        };
-        redisClient.set(`otp:${resp.id}`, JSON.stringify(OtpObj), "EX", 300);
-
 export interface OtpInterface {
     salt: string,
     hash: string
     retry_limit: number
+}
+
+
+interface eachPlanInterface {
+    maxUsers: number
+    maxProjects: number,
+    maxTasksPerProject:  number,
+
+    aiRequestsPerDay: number,
+    aiEnabled: boolean,
+
+    auditLogRetentionDays: number,
+    commentsEnabled: boolean,
+
+    canInviteUsers: boolean,
+    canExportData: boolean,
+    canAccessAuditLogs: boolean
+}
+
+export interface PlanInterface {
+    FREE: eachPlanInterface,
+    PRO: eachPlanInterface,
+    ENTERPRISE: eachPlanInterface
 }
 
 type PrismaDriverAdapterMeta = {
@@ -31,3 +47,5 @@ type PrismaDriverAdapterMeta = {
         };
     };
 };
+
+

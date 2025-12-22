@@ -112,4 +112,6 @@ router.post("/verify-otp",asyncHandler(AuthService.verifyOtpHandler));
  */
 router.post("/login",asyncHandler(AuthService.Login));
 
+router.get("/refresh-token",asyncHandler(AuthService.refreshToken))
+
 export default router;

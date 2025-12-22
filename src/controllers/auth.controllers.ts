@@ -3,11 +3,11 @@ import redisClient from "@/services/redis.service";
 import { SendEmailPayload } from "@/types/common";
 import { BadRequestError, InternalServerError, TooManyRequestError, UnauthorizedError } from "@/utils/errors/HttpErrors";
 import { generate4DigitOTP } from "@/utils/otp";
-import { getHash, verifyHash } from "@/utils/hashing";
+import { getHash, hashWithoutSalt, verifyHash } from "@/utils/hashing";
 import { emailQueueService } from "@/utils/Queue";
 import { LoginSchema, SignupSchema } from "@/utils/schemas/auth.schema";
 import { Request, Response } from "express";
-import z from "zod";
+import z, { success } from "zod";
 import { generateRefreshToken, signAccessToken, storedRefreshToken } from "@/utils/jwtHelper";
 
 
@@ -100,7 +100,7 @@ export class AuthService {
         })
     }
 
-    public static Login = async (req: Request, res: Response) => {        
+    public static Login = async (req: Request, res: Response) => {
         const body = req.body;
         if (!body || typeof body !== "object") {
             throw new BadRequestError("body didn't found")
@@ -155,9 +155,49 @@ export class AuthService {
             maxAge: 30 * 24 * 60 * 60 * 1000
         });
 
+        req.user = {
+            id: existingUser.id
+        }
+
         return res.status(201).json({
             success: true,
             message: "Login Successfull",
         });
+    }
+
+    public static refreshToken = async (req: Request, res: Response) => {
+        const refresh_token = req.cookies.refresh_token;
+
+        if (!refresh_token) {
+            throw new UnauthorizedError("Login Required! refresh token didnt found")
+        }
+        const refreshTokenHash = hashWithoutSalt(refresh_token)
+        const existingRefreshToken = await prisma.refreshToken.findFirst({
+            where: {
+                tokenHash: refreshTokenHash
+            }
+        });
+
+        if (!existingRefreshToken || new Date() > existingRefreshToken.expiresAt) { 
+            throw new UnauthorizedError("Login Required! refresh token failed")
+        }
+
+        const accessToken = signAccessToken({
+            sub: existingRefreshToken.id,
+            aud: "worklune-api"
+        });
+
+        res.cookie("access_token", accessToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            path: "/",
+            maxAge: 15 * 60 * 1000
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "request processed",
+        })
     }
 }

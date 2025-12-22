@@ -8,6 +8,7 @@ export interface getHashReturnInterface {
 const ITERATIONS = Number(process.env.HASH_ITERATION) || 64;
 const KEY_LENGTH = Number(process.env.HASH_KEY_LENGTH) || 1000;
 const DIGEST = process.env.HASH_DIGEST || 'sha512';
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET!
 
 export const getHash = (inputString: string): getHashReturnInterface => {
     if (!inputString || typeof inputString !== "string") {
@@ -15,7 +16,6 @@ export const getHash = (inputString: string): getHashReturnInterface => {
     }
 
     const salt = crypto.randomBytes(16).toString("hex");
-  
 
     const hash = crypto.pbkdf2Sync(
         inputString,
@@ -27,6 +27,13 @@ export const getHash = (inputString: string): getHashReturnInterface => {
 
     return { salt, hash };
 }
+
+export const hashWithoutSalt = (token: string): string => {
+    return crypto
+        .createHmac(DIGEST, REFRESH_TOKEN_SECRET)
+        .update(token)
+        .digest("hex");
+};
 
 export const verifyHash = (inputString: string, storedHash: string, salt: string): Boolean => {
     if (!inputString) {
