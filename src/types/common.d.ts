@@ -1,6 +1,12 @@
-export interface SendEmailPayload {
+export interface SendOtpPayload {
     name: string;
     otp: string;
+    email: string;
+    subject?: string;
+}
+
+export interface SendInvitationPayload { 
+    workspace_name: string;
     email: string;
     subject?: string;
 }

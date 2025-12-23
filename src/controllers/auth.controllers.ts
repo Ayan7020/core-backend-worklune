@@ -1,10 +1,10 @@
 import { prisma } from "@/services/prisma.service";
 import redisClient from "@/services/redis.service";
-import { SendEmailPayload } from "@/types/common";
+import { SendOtpPayload } from "@/types/common";
 import { BadRequestError, InternalServerError, TooManyRequestError, UnauthorizedError } from "@/utils/errors/HttpErrors";
 import { generate4DigitOTP } from "@/utils/otp";
 import { getHash, hashWithoutSalt, verifyHash } from "@/utils/hashing";
-import { emailQueueService } from "@/utils/Queue";
+import { OtpQueueService } from "@/utils/Queue";
 import { LoginSchema, SignupSchema } from "@/utils/schemas/auth.schema";
 import { Request, Response } from "express";
 import z, { success } from "zod";
@@ -43,13 +43,13 @@ export class AuthService {
         };
         await redisClient.multi().hset(`otp:${resp.id}`, OtpObj).expire(`otp:${resp.id}`, 300).exec();
 
-        const payload: SendEmailPayload = {
+        const payload: SendOtpPayload = {
             email: signupBody.email,
             name: signupBody.name,
             otp: newOtp
         };
         const dataToSend = JSON.stringify(payload);
-        await emailQueueService.insertDataToQueue(dataToSend);
+        await OtpQueueService.insertDataToQueue(dataToSend);
 
         return res.status(201).json({
             success: true,
@@ -183,7 +183,7 @@ export class AuthService {
         }
 
         const accessToken = signAccessToken({
-            sub: existingRefreshToken.id,
+            sub: existingRefreshToken.userId,
             aud: "worklune-api"
         });
 

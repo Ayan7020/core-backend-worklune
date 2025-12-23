@@ -6,22 +6,22 @@ import z from "zod";
 
 export class WorkSpace {
     public static createWorkSpace = async (req: Request, res: Response) => {
-        const userId = req.user?.id;
+        const userId = req.user?.id; 
         if (!userId) {
             throw new BadRequestError("User Id not found!")
-        }
-
+        } 
         const { name: workspaceName } = z.parse(createWorkSpaceSchema, req.body);
-
+        const now = new Date();
         const createdWorkspace = await prisma?.workspace.create({
             data: {
                 name: workspaceName,
-                slug: slugify(workspaceName),
+                slug: slugify(workspaceName,{
+                    replacement: "_"
+                }),
                 createdById: userId,
                 subscription: {
                     create: {
-                        currentPeriodStart: new Date(Date.now()),
-                        currentPeriodEnd: new Date(Date.now() + 30)
+                        currentPeriodStart: now
                     }
                 },
                 memberships: {
@@ -40,6 +40,9 @@ export class WorkSpace {
         return res.status(201).json({
             success: true,
             message: "Workspace created successfully",  
+            data: {
+                workspace_id: createdWorkspace.id
+            }
         })
     }
 } 
