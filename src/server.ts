@@ -32,7 +32,7 @@ const shutdown = async (signal: string) => {
 
   if (server) {
     server.close(async () => {
-      console.log("HTTP server closed");
+      console.log("HTTP server closed");   
 
       await prisma.$disconnect();
       console.log("Prisma disconnected");
