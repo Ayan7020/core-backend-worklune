@@ -3,6 +3,7 @@ import { InvitationSchemaBody, UpdateInvitationSchema } from "@/utils/schemas/in
 import e, { Request, Response } from "express";
 import z, { success } from "zod";
 import { prisma } from "@/services/prisma.service";
+import { validatePlan } from "@/utils/validatePlan";
 
 export class Invitation {
     public static async sendInvitation(req: Request, res: Response) {
@@ -11,18 +12,19 @@ export class Invitation {
             throw new UnauthorizedError("Unauthorized");
         }
         const inviterId = req.user!.id;
-        const { workspaceId } = req.params;
+        const workspaceId  = req.query.workspaceId as string;
 
         const targetUser = await prisma.user.findUnique({
             where: { email: invitationBody.sendTo }
 
         });
 
-        if (!targetUser) {
+        if (!targetUser || !workspaceId ) {
             throw new BadRequestError("Unable to send invitation");
         }
 
         if (inviterId === targetUser.id) {
+            console.log(targetUser.id,inviterId)
             throw new ConflictError("Unable to send invitation");
         }
 
@@ -34,7 +36,7 @@ export class Invitation {
         });
 
         if (existingMembership) {
-            throw new ConflictError("Unable to send invitation");
+            throw new ConflictError(`${targetUser.email} is already there in your requested workspace.`);
         }
 
         const existingInvitation = await prisma.invitation.findFirst({
@@ -46,7 +48,7 @@ export class Invitation {
         });
 
         if (existingInvitation) {
-            throw new ConflictError("Unable to send invitation");
+            throw new ConflictError("Invitation is already sent");
         }
 
         const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -54,10 +56,10 @@ export class Invitation {
         await prisma.invitation.create({
             data: {
                 userId: targetUser.id,
-                workspaceId,
+                workspaceId: workspaceId,
                 role: invitationBody.role,
                 invitedById: inviterId,
-                expiresAt
+                expiresAt, 
             }
         });
 
@@ -67,7 +69,7 @@ export class Invitation {
         })
     }
 
-    public static async updateInvitation(req: Request, res: Response) {
+    public static async   updateInvitation(req: Request, res: Response) {
         const updateInvitationBody = z.parse(UpdateInvitationSchema, req.body);
 
         const invitation = await prisma.invitation.findUnique({
@@ -89,8 +91,14 @@ export class Invitation {
         if (invitation.expiresAt < new Date()) {
             throw new ConflictError("Invitation expired");
         }
-
-        await prisma.$transaction(async (tx) => { 
+        
+        await prisma.$transaction(async (tx) => {
+            if (updateInvitationBody.action === "ACCEPTED") {
+                await validatePlan({
+                    workspaceId: invitation.workspaceId,
+                    action: "ADD_MEMBER",
+                });
+            }
             await tx.invitation.update({
                 where: {
                     id: updateInvitationBody.id
@@ -100,7 +108,7 @@ export class Invitation {
                     respondedAt: new Date()
                 }
             });
- 
+
             if (updateInvitationBody.action === "ACCEPTED") {
                 await tx.membership.create({
                     data: {

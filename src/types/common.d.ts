@@ -17,6 +17,11 @@ export interface OtpInterface {
     retry_limit: number
 }
 
+export type PlanAction =
+  | "ADD_MEMBER"
+  | "CREATE_PROJECT"
+  | "AI_REQUEST";
+
 
 interface eachPlanInterface {
     maxUsers: number

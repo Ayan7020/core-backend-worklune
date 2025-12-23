@@ -6,8 +6,7 @@ import swaggerUi from "swagger-ui-express";
 import { RateLimit } from "./lib/middleware/limiters";
 import errorHandler from "./lib/middleware/error/errorMiddleware";
 import cookieParser from "cookie-parser";
-import { isAuthenticatedUserMiddleware } from "./lib/middleware/auth/isAuth.middleware";
-import { validatePlan } from "./lib/middleware/dashboard/validatePlan.middleware";
+import { isAuthenticatedUserMiddleware } from "./lib/middleware/auth/isAuth.middleware"; 
 
 const app = express();
 

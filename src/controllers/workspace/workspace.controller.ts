@@ -26,7 +26,7 @@ export class WorkSpace {
                 },
                 memberships: {
                     create: {
-                        role: "ADMIN",
+                        role: "OWNER",
                         userId: userId
                     }
                 }
