@@ -1,12 +1,11 @@
-import { BadRequestError, ForbiddenError } from "@/utils/errors/HttpErrors";
+import { BadRequestError, ConflictError, ForbiddenError } from "@/utils/errors/HttpErrors";
 import { prisma } from "@/services/prisma.service";
 import { NextFunction, Request, Response } from "express";
-import { WORKSPACE_ROLE_ORDER } from "@/utils/Constants/guard";
-import { PLANS } from "@/utils/Constants/Plan";
+import { PROJECT_ROLE_ORDER, WORKSPACE_ROLE_ORDER } from "@/utils/Constants/guard";
+import { Membership } from "@prisma/client";
 
-export class WorkspaceRBAC {
-  
-  static requireMinRole(minRole: keyof typeof WORKSPACE_ROLE_ORDER) {
+export class RBAC {
+  static workspaceRequireMinRole(minRole: keyof typeof WORKSPACE_ROLE_ORDER) {
     return async (req: Request, res: Response, next: NextFunction) => {
       const userId = req.user?.id;
       const workspaceId = req.query.workspaceId as string;
@@ -34,7 +33,46 @@ export class WorkspaceRBAC {
         );
       }
 
-      (req as any).membership = membership;
+      req.membership = membership;
+
+      next();
+    };
+  }
+  static projectRequiresMinRole(minRole: keyof typeof PROJECT_ROLE_ORDER) {
+    return async (req: Request, res: Response, next: NextFunction) => {
+      const userId = req.user?.id;
+      const userMembership = req.membership;
+
+      if (!userMembership || !userId) {
+        throw new BadRequestError("Invalid request!")
+      }
+
+      if (userMembership.role == "MEMBER") {
+        const userMember = await prisma.projectMembers.findUnique({
+          where: {
+            projectId_userId: {
+              projectId: req.body?.projectId,
+              userId
+            }
+          },
+          select: {
+            role: true
+          }
+        });
+
+        if (!userMember || !userMember.role) {
+          throw new ForbiddenError("user is not member of a project or not have admin work privelleges")
+        }
+
+        const userProjectRoleRank = PROJECT_ROLE_ORDER[userMember.role]
+        const requireProjectRoleRank = PROJECT_ROLE_ORDER[minRole]
+
+        if (requireProjectRoleRank > userProjectRoleRank) {
+          throw new ForbiddenError(
+            `Requires ${minRole.toLowerCase()} access or admin privellegs`
+          );
+        }
+      }
 
       next();
     };

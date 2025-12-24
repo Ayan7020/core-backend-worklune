@@ -1,7 +1,7 @@
 import { createProjectsSchema } from "@/utils/schemas/projects.schema";
 import { Request, Response } from "express";
 import { prisma } from "@/services/prisma.service";
-import z, { success } from "zod";
+import z from "zod";
 import { BadRequestError } from "@/utils/errors/HttpErrors";
 import { validatePlan } from "@/utils/validatePlan";
 
@@ -48,5 +48,6 @@ export class Projects {
             }
         })
     }
+
 }
 

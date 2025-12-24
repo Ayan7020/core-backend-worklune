@@ -1,5 +1,5 @@
 import WorkSpaceRouter from "./workspace/workspace.route";
-import ProjectsRouter from "./workspace/projects.routes"; 
+import ProjectsRouter from "./workspace/projects/projects.routes"; 
 import InvitationRouter from "./workspace/invitation.routes";
 import express from "express";
 
