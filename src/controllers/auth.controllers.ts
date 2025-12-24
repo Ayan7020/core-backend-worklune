@@ -9,6 +9,7 @@ import { LoginSchema, SignupSchema } from "@/utils/schemas/auth.schema";
 import { Request, Response } from "express";
 import z, { success } from "zod";
 import { generateRefreshToken, signAccessToken, storedRefreshToken } from "@/utils/jwtHelper";
+import { addTime } from "@/utils/clock";
 
 
 export class AuthService {
@@ -90,7 +91,7 @@ export class AuthService {
             where: {
                 id: body.id
             }, data: {
-                emailVerified: new Date().toISOString()
+                emailVerified: addTime({})
             }
         })
         await redisClient.del(REDIS_USER_KEY);
@@ -178,8 +179,8 @@ export class AuthService {
             }
         });
 
-        if (!existingRefreshToken || new Date() > existingRefreshToken.expiresAt) { 
-            throw new UnauthorizedError("Login Required! refresh token failed")
+        if (!existingRefreshToken || addTime({}) > existingRefreshToken.expiresAt) { 
+            throw new UnauthorizedError("Login Required! refresh token exipired")
         }
 
         const accessToken = signAccessToken({

@@ -4,6 +4,7 @@ import e, { Request, Response } from "express";
 import z, { success } from "zod";
 import { prisma } from "@/services/prisma.service";
 import { validatePlan } from "@/utils/validatePlan";
+import { addTime } from "@/utils/clock";
 
 export class Invitation {
     public static async sendInvitation(req: Request, res: Response) {
@@ -12,19 +13,19 @@ export class Invitation {
             throw new UnauthorizedError("Unauthorized");
         }
         const inviterId = req.user!.id;
-        const workspaceId  = req.query.workspaceId as string;
+        const workspaceId = req.query.workspaceId as string;
 
         const targetUser = await prisma.user.findUnique({
             where: { email: invitationBody.sendTo }
 
         });
 
-        if (!targetUser || !workspaceId ) {
+        if (!targetUser || !workspaceId) {
             throw new BadRequestError("Unable to send invitation");
         }
 
         if (inviterId === targetUser.id) {
-            console.log(targetUser.id,inviterId)
+            console.log(targetUser.id, inviterId)
             throw new ConflictError("Unable to send invitation");
         }
 
@@ -51,7 +52,7 @@ export class Invitation {
             throw new ConflictError("Invitation is already sent");
         }
 
-        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        const expiresAt = addTime({ days: 15 })
 
         await prisma.invitation.create({
             data: {
@@ -59,7 +60,7 @@ export class Invitation {
                 workspaceId: workspaceId,
                 role: invitationBody.role,
                 invitedById: inviterId,
-                expiresAt, 
+                expiresAt,
             }
         });
 
@@ -69,7 +70,7 @@ export class Invitation {
         })
     }
 
-    public static async   updateInvitation(req: Request, res: Response) {
+    public static async updateInvitation(req: Request, res: Response) {
         const updateInvitationBody = z.parse(UpdateInvitationSchema, req.body);
 
         const invitation = await prisma.invitation.findUnique({
@@ -88,10 +89,10 @@ export class Invitation {
             throw new ConflictError("Invitation already handled");
         }
 
-        if (invitation.expiresAt < new Date()) {
+        if (invitation.expiresAt < addTime({})) {
             throw new ConflictError("Invitation expired");
         }
-        
+
         await prisma.$transaction(async (tx) => {
             if (updateInvitationBody.action === "ACCEPTED") {
                 await validatePlan({
@@ -105,7 +106,7 @@ export class Invitation {
                 },
                 data: {
                     status: updateInvitationBody.action,
-                    respondedAt: new Date()
+                    respondedAt: addTime({})
                 }
             });
 

@@ -2,6 +2,7 @@ import Jwt, { JsonWebTokenError, JwtPayload, TokenExpiredError } from "jsonwebto
 import crypto from "crypto";
 import { prisma } from "@/services/prisma.service";
 import { hashWithoutSalt } from "./hashing";
+import { addTime } from "./clock";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -54,9 +55,11 @@ export const storedRefreshToken = async (accessToken: string, userId: string) =>
             userId: userId
         }
     });
+    
+    const expiresAt = addTime({
+        days: 30
+    });
 
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30);
     if (!existingUserRefreshToken) {
         await prisma.refreshToken.create({
             data: {

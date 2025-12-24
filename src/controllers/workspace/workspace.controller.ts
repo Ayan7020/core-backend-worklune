@@ -1,3 +1,4 @@
+import { addTime } from "@/utils/clock";
 import { BadRequestError } from "@/utils/errors/HttpErrors";
 import { createWorkSpaceSchema } from "@/utils/schemas/workspace.schema";
 import { Request, Response } from "express";
@@ -11,7 +12,7 @@ export class WorkSpace {
             throw new BadRequestError("User Id not found!")
         } 
         const { name: workspaceName } = z.parse(createWorkSpaceSchema, req.body);
-        const now = new Date();
+
         const createdWorkspace = await prisma?.workspace.create({
             data: {
                 name: workspaceName,
@@ -21,7 +22,7 @@ export class WorkSpace {
                 createdById: userId,
                 subscription: {
                     create: {
-                        currentPeriodStart: now
+                        currentPeriodStart: addTime({})
                     }
                 },
                 memberships: {
