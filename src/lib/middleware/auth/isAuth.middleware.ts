@@ -24,11 +24,11 @@ export const isAuthenticatedUserMiddleware = (
     next();
   } catch (error) {
     if (error instanceof TokenExpiredError) {
-      throw new UnauthorizedError("Access token expired");
+      throw new UnauthorizedError("Authentication required Access token expired");
     }
 
     if (error instanceof JsonWebTokenError) {
-      throw new UnauthorizedError("Invalid access token");
+      throw new UnauthorizedError("Authentication required Invalid access token");
     }
 
     throw error;

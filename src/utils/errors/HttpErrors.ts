@@ -1,15 +1,16 @@
 import { AppError } from "./AppError";
-import { ERROR_CODES } from "./errorCodes";
+import { ERROR_CODES, ErrorCode } from "./errorCodes";
 
 export class BadRequestError extends AppError {
     constructor(message = "Bad request", details?: Record<string, unknown>) {
         super(message,400,ERROR_CODES.BAD_REQUEST,true,details);
     }
 }
+ 
 
 export class UnauthorizedError extends AppError {
-  constructor(message = "Unauthorized") {
-    super(message, 401, ERROR_CODES.UNAUTHORIZED);
+  constructor(message = "Unauthorized",code: ErrorCode  = ERROR_CODES.UNAUTHORIZED,details?: Record<string, unknown>) {
+    super(message, 401, code,true,details);
   }
 }
 

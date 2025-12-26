@@ -3,7 +3,7 @@ import { AppError } from "@/utils/errors/AppError";
 import { BadRequestError, ConflictError, InternalServerError } from "@/utils/errors/HttpErrors";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { NextFunction, Request, Response } from "express"
-import { ZodError } from "zod"; 
+import { ZodError } from "zod";
 
 const errorHandler = (err: unknown, req: Request, res: Response, next: NextFunction) => {
     let error = err;
@@ -22,20 +22,25 @@ const errorHandler = (err: unknown, req: Request, res: Response, next: NextFunct
             const fields =
                 meta?.driverAdapterError?.cause?.constraint?.fields ??
                 ["unknown"];
+
             switch (err.code) {
                 case 'P2002':
                     error = new ConflictError(
                         "Duplicate value violates unique constraint",
-                        { fields }
+                        {
+                            validationError: fields.map(field => ({
+                                field: field,
+                                message: `${field.charAt(0).toUpperCase() + field.slice(1)} already exists!`
+                            }))
+                        }
                     );
                     break;
                 case 'P2025':
                     error = new BadRequestError();
                     break;
                 case "P2003":
-                    error = new BadRequestError("Invalid foreign key reference",
-                        { fields }
-                    );
+                    console.error("Foreign key error")
+                    error = new BadRequestError("Invalid Request!");
                     break;
                 default:
                     error = new InternalServerError();
@@ -48,7 +53,7 @@ const errorHandler = (err: unknown, req: Request, res: Response, next: NextFunct
             }
         }
     }
-    const appError = error as AppError; 
+    const appError = error as AppError;
     if (!isProduction) {
         console.error({
             message: appError.message,

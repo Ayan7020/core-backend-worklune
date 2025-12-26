@@ -1,8 +1,8 @@
 import { prisma } from "@/services/prisma.service";
 import redisClient from "@/services/redis.service";
-import { SendOtpPayload } from "@/types/common";
-import { BadRequestError, InternalServerError, TooManyRequestError, UnauthorizedError } from "@/utils/errors/HttpErrors";
-import { generate4DigitOTP } from "@/utils/otp";
+import { OtpInterface, SendOtpPayload } from "@/types/common";
+import { BadRequestError, InternalServerError, TooManyRequestError, UnauthorizedError, ValidationError } from "@/utils/errors/HttpErrors";
+import { OtpService } from "@/utils/otp";
 import { getHash, hashWithoutSalt, verifyHash } from "@/utils/hashing";
 import { OtpQueueService } from "@/utils/Queue";
 import { LoginSchema, SignupSchema } from "@/utils/schemas/auth.schema";
@@ -10,13 +10,14 @@ import { Request, Response } from "express";
 import z, { success } from "zod";
 import { generateRefreshToken, signAccessToken, storedRefreshToken } from "@/utils/jwtHelper";
 import { addTime } from "@/utils/clock";
+import { ERROR_CODES } from "@/utils/errors/errorCodes";
 
 
 export class AuthService {
     public static Signup = async (req: Request, res: Response) => {
         const body = req.body;
         if (!body || typeof body !== "object") {
-            throw new BadRequestError("body didnt' found")
+            throw new BadRequestError("Invalid Request")
         }
         const signupBody = z.parse(SignupSchema, body);
 
@@ -35,14 +36,15 @@ export class AuthService {
             throw new InternalServerError();
         }
 
-        const newOtp = generate4DigitOTP().toString();
+        const newOtp = OtpService.generateOtp();
         const { hash: newHash, salt: newSalt } = getHash(newOtp);
+
         const OtpObj = {
             salt: newSalt,
             hash: newHash,
             retry_limit: 3
         };
-        await redisClient.multi().hset(`otp:${resp.id}`, OtpObj).expire(`otp:${resp.id}`, 300).exec();
+        await OtpService.sendOtp(signupBody.email, OtpObj);
 
         const payload: SendOtpPayload = {
             email: signupBody.email,
@@ -64,37 +66,46 @@ export class AuthService {
 
     public static verifyOtpHandler = async (req: Request, res: Response) => {
         const body = req.body;
-        if (!body || typeof body !== "object" || !body?.otp || !body?.id) {
+        if (!body || typeof body !== "object" || !body?.otp || !body?.email) {
             throw new BadRequestError("Invalid Request!")
         }
-        const REDIS_USER_KEY = `otp:${body.id}`;
 
         const userOtp = String(body.otp);
 
-        const existingUserOtp = await redisClient.hgetall(REDIS_USER_KEY);
+        const existingUserOtp = await OtpService.getOtp(body.email);
         if (!existingUserOtp || Object.keys(existingUserOtp).length === 0) {
-            throw new UnauthorizedError("This OTP has expired. Please request a new one.!")
+            throw new UnauthorizedError("Unauthorized", ERROR_CODES.UNAUTHORIZED, {
+                validationError: [{
+                    field: "otp",
+                    message: "This OTP has expired. Please request a new one.!"
+                }]
+            })
         }
 
-        if (Number(existingUserOtp?.retry_limit) === 0) {
-            await redisClient.del(REDIS_USER_KEY);
+        if (Number(existingUserOtp.retry_limit) === 0) {
+            await OtpService.deleteOtp(body.email);
             throw new TooManyRequestError("You've reached the maximum number of OTP attempts. Please request a new OTP.")
         }
 
         const isVerifiedOtp = verifyHash(userOtp, existingUserOtp.hash, existingUserOtp.salt);
         if (!isVerifiedOtp) {
-            redisClient.hincrby(REDIS_USER_KEY, 'retry_limit', -1)
-            throw new UnauthorizedError("The OTP you entered is incorrect. Please try again.");
+            await OtpService.decrementRetry(body.email);
+            throw new UnauthorizedError("Unauthorized", ERROR_CODES.UNAUTHORIZED, {
+                validationError: [{
+                    field: "otp",
+                    message: "The OTP you entered is incorrect. Please try again."
+                }]
+            })
         }
 
         await prisma.user.update({
             where: {
-                id: body.id
+                email: body.email
             }, data: {
                 emailVerified: addTime({})
             }
         })
-        await redisClient.del(REDIS_USER_KEY);
+        await OtpService.deleteOtp(body.email);
         return res.status(201).json({
             success: true,
             message: "Otp Verify sucessfully!",
@@ -114,21 +125,48 @@ export class AuthService {
         })
 
         if (!existingUser) {
-            throw new BadRequestError("User didn't found!");
+            throw new BadRequestError("Bad Request", {
+                validationError: [{
+                    field: "email",
+                    message: "User not found"
+                }]
+            });
         }
 
-        if (!existingUser.emailVerified) {
-            throw new UnauthorizedError("Please verify the account!!");
-        }
-
-        if (!existingUser.passwordHash || !existingUser.salt) {
-            throw new UnauthorizedError("Invalid authentication method!");
+        if (!existingUser.passwordHash || !existingUser.salt || !existingUser.name) {
+            throw new UnauthorizedError("Unauthorized", ERROR_CODES.INVALID_AUTH_TYPE);
         }
 
         const isUserVerify = verifyHash(LoginBody.password, existingUser.passwordHash, existingUser.salt);
         if (!isUserVerify) {
-            throw new UnauthorizedError("Wrong Password. Try again!");
+            throw new UnauthorizedError("Unauthorized", ERROR_CODES.WRONG_PASSWORD, {
+                validationError: [{
+                    field: "password",
+                    message: "Wrong Password"
+                }]
+            });
         };
+
+        if (!existingUser.emailVerified) {
+            const newOtp = OtpService.generateOtp()
+            const { hash, salt } = getHash(newOtp);
+            const payload: OtpInterface = {
+                hash: hash,
+                salt: salt,
+                retry_limit: 3
+            };
+            await OtpService.sendOtp(existingUser.email, payload);
+            const payloadQueue: SendOtpPayload = {
+                email: existingUser.email,
+                name: existingUser.name,
+                otp: newOtp
+            };
+            const dataToSend = JSON.stringify(payloadQueue);
+            await OtpQueueService.insertDataToQueue(dataToSend);
+            throw new UnauthorizedError("Unauthorized", ERROR_CODES.VERIFY_ACCOUNT);
+        }
+
+
 
         const payload = {
             aud: "worklune-api",
@@ -179,7 +217,7 @@ export class AuthService {
             }
         });
 
-        if (!existingRefreshToken || addTime({}) > existingRefreshToken.expiresAt) { 
+        if (!existingRefreshToken || addTime({}) > existingRefreshToken.expiresAt) {
             throw new UnauthorizedError("Login Required! refresh token exipired")
         }
 

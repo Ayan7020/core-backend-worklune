@@ -11,6 +11,16 @@ services:
       volumes:
       - redis_data:/data
       restart: unless-stopped
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    restart: always
+    ports:
+      - "5540:5540" 
+    volumes:
+      - redis-insight-data:/data  
+    depends_on:
+      - worklune-redis
   
   worklune-pgDb:
     image: postgres:14.20-alpine
@@ -55,6 +65,7 @@ configs:
 volumes:
   redis_data:  
   pgsql_data:
+  redis-insight-data:
   rabbitmq-lib:
     driver: local
   rabbitmq-log:
