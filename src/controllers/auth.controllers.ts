@@ -121,6 +121,13 @@ export class AuthService {
         const existingUser = await prisma.user.findFirst({
             where: {
                 email: LoginBody.email
+            },
+            include: {
+                _count: {
+                    select: {
+                        memberships: true
+                    }
+                }
             }
         })
 
@@ -201,6 +208,9 @@ export class AuthService {
         return res.status(201).json({
             success: true,
             message: "Login Successfull",
+            data: {
+                isWorkSpace: existingUser._count.memberships > 0 ? true : false
+            }
         });
     }
 
