@@ -11,7 +11,7 @@ export class WorkSpace {
         if (!userId) {
             throw new BadRequestError("User Id not found!")
         } 
-        const { name: workspaceName } = z.parse(createWorkSpaceSchema, req.body);
+        const { workspaceName } = z.parse(createWorkSpaceSchema, req.body);
 
         const createdWorkspace = await prisma?.workspace.create({
             data: {

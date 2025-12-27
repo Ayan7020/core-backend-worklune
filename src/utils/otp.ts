@@ -39,19 +39,19 @@ export class OtpService {
 
     if (result === "BLOCKED") {
       throw new TooManyRequestError("Too many requests", {
-        validationError: [{ field: "otp", message: "Account temporarily blocked" }, { field: "email", message: "Account temporarily blocked" }]
+        validationError: [{ field: "otp", message: "Account temporarily blocked" }]
       });
     }
 
     if (result === "RATE_LIMIT") {
       throw new TooManyRequestError("Too many requests", {
-        validationError: [{ field: "otp", message: "OTP limit exceeded" }, { field: "email", message: "OTP limit exceeded" }]
+        validationError: [{ field: "otp", message: "OTP limit exceeded" }]
       });
     }
 
     if (result === "COOL_DOWN") {
       throw new TooManyRequestError("Too many requests", {
-        validationError: [{ field: "otp", message: "Wait before requesting another OTP" }, { field: "email", message: "Wait before requesting another OTP" }]
+        validationError: [{ field: "otp", message: "Wait before requesting another OTP" }]
       });
     }
 
