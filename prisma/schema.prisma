@@ -27,6 +27,16 @@ model User {
   projectMembers    ProjectMembers[]
   invitations       Invitation[]
   tasks             Task[]
+  userSetting       UserSetting?
+}
+
+model UserSetting {
+  id                 String @id @default(uuid())
+  userId             String @unique
+  defaultWorkspaceId String
+
+  user      User      @relation(fields: [userId], references: [id])
+  workspace Workspace @relation(fields: [defaultWorkspaceId], references: [id])
 }
 
 model RefreshToken {
@@ -94,6 +104,7 @@ model Workspace {
   projects     Projects[]
   subscription Subscription?
   invitations  Invitation[]
+  userSettings UserSetting[]
 }
 
 model Subscription {
@@ -139,7 +150,7 @@ model ProjectMembers {
   projects Projects @relation(fields: [projectId], references: [id])
   user     User     @relation(fields: [userId], references: [id])
 
-  @@unique([projectId,userId])
+  @@unique([projectId, userId])
 }
 
 model Task {
@@ -154,10 +165,9 @@ model Task {
 
   title       String
   description String
-  tag      String
+  tag         String
 
   priority TaskPriority
-
 
   user     User     @relation(fields: [createdById], references: [id])
   projects Projects @relation(fields: [projectId], references: [id])
