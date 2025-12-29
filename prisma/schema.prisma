@@ -137,6 +137,8 @@ model Projects {
   workspace      Workspace        @relation(fields: [workspaceId], references: [id])
   projectMembers ProjectMembers[]
   tasks          Task[]
+
+  @@unique([workspaceId,name])
 }
 
 model ProjectMembers {

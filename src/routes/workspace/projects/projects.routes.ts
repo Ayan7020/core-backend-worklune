@@ -6,5 +6,7 @@ import express from "express";
 const router = express.Router();    
  
 router.post("/create-project",RBAC.workspaceRequireMinRole("ADMIN"),asyncHandler(Projects.createProjects));
+router.get("/get-project",RBAC.workspaceRequireMinRole("MEMBER"),asyncHandler(Projects.getProjects));
+
 
 export default router;

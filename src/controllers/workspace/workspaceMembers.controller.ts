@@ -10,6 +10,7 @@ export class WorkspaceMember {
             throw new BadRequestError()
         }
 
+        // to do tasks fix
         const membershipData = await prisma.membership.findMany({
             where: {
                 workspaceId: workspaceId
@@ -23,7 +24,11 @@ export class WorkspaceMember {
                         _count: {
                             select: {
                                 tasks: true,
-                                projects: true
+                                projects: {
+                                    where: {
+                                        workspaceId: workspaceId
+                                    }
+                                }
                             }
                         }
                     }
@@ -34,6 +39,7 @@ export class WorkspaceMember {
         if (!membershipData) {
             throw new BadRequestError("membershipData not found")
         }
+
         const membersData = membershipData.map(memberData => ({
             name: memberData.user.name,
             email: memberData.user.email,
