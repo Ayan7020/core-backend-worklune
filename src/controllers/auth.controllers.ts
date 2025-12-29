@@ -125,7 +125,8 @@ export class AuthService {
             include: {
                 _count: {
                     select: {
-                        memberships: true
+                        memberships: true,
+                        invitations: true
                     }
                 }
             }
@@ -209,7 +210,8 @@ export class AuthService {
             success: true,
             message: "Login Successfull",
             data: {
-                isWorkSpace: existingUser._count.memberships > 0 ? true : false
+                isWorkSpace: existingUser._count.memberships > 0 ? true : false,
+                isInvitaion: existingUser._count.invitations > 0 ? true : false
             }
         });
     }

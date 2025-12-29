@@ -1,7 +1,7 @@
 import { BadRequestError, ConflictError, ForbiddenError, UnauthorizedError } from "@/utils/errors/HttpErrors";
 import { InvitationSchemaBody, UpdateInvitationSchema } from "@/utils/schemas/invitation.schema";
 import e, { Request, Response } from "express";
-import z, { success } from "zod";
+import z, { email, object, success } from "zod";
 import { prisma } from "@/services/prisma.service";
 import { validatePlan } from "@/utils/validatePlan";
 import { addTime } from "@/utils/clock";
@@ -16,16 +16,14 @@ export class Invitation {
         const workspaceId = req.query.workspaceId as string;
 
         const targetUser = await prisma.user.findUnique({
-            where: { email: invitationBody.sendTo }
-
+            where: { email: invitationBody.sendTo } 
         });
 
         if (!targetUser || !workspaceId) {
             throw new BadRequestError("Unable to send invitation");
         }
 
-        if (inviterId === targetUser.id) {
-            console.log(targetUser.id, inviterId)
+        if (inviterId === targetUser.id) { 
             throw new ConflictError("Unable to send invitation");
         }
 
@@ -70,18 +68,25 @@ export class Invitation {
         })
     }
 
+
     public static async updateInvitation(req: Request, res: Response) {
+        const userID = req.user?.id
+        if(!userID) {
+            throw new BadRequestError()
+        }
         const updateInvitationBody = z.parse(UpdateInvitationSchema, req.body);
 
         const invitation = await prisma.invitation.findUnique({
-            where: { id: updateInvitationBody.id }
+            where: { 
+                id: updateInvitationBody.id
+            }
         });
 
         if (!invitation) {
             throw new BadRequestError("Invitation not found");
         }
 
-        if (invitation.userId !== req.user?.id) {
+        if (invitation.userId !== userID) {
             throw new ForbiddenError("Not allowed");
         }
 
@@ -125,6 +130,54 @@ export class Invitation {
         res.status(201).json({
             success: true,
             message: "updated the invitation"
+        })
+    } 
+    
+    public static async getInvitation(req: Request, res: Response) { 
+        const userId = req.user?.id
+        if (!userId) {
+            throw new BadRequestError("User Id not found")
+        }
+
+        const exisingInvitation = await prisma.invitation.findFirst({
+            where: {
+                userId: userId,
+                status: "PENDING"
+            }, 
+            include: {
+                workspace: {
+                    select: {
+                        name: true
+                    }
+                }
+            }
+        });
+
+        if (!exisingInvitation || Object.entries(exisingInvitation).length === 0) {
+            throw new BadRequestError("Invitation not found")
+        }
+
+        const senderUserDetails = await prisma.user.findUnique({
+            where: {
+                id: exisingInvitation.invitedById
+            }
+        });
+
+        if(!senderUserDetails) {
+            throw new BadRequestError();
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Invitation found",
+            data: {
+                invitationData: {
+                    id: exisingInvitation.id,
+                    senderEmail: senderUserDetails.email,
+                    workspaceName: exisingInvitation.workspace.name,
+                    role: exisingInvitation.role
+                }
+            }
         })
     }
 }

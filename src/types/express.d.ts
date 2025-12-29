@@ -10,6 +10,7 @@ declare module "express-serve-static-core" {
   interface Request {
     user?: User;
     membership?: Membership;
+    workspaceid?: string;
     cookies: {
       access_token?: string;
       refresh_token?: string;

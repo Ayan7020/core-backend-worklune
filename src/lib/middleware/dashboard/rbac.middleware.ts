@@ -34,6 +34,7 @@ export class RBAC {
       }
 
       req.membership = membership;
+      req.workspaceid = workspaceId;
 
       next();
     };
