@@ -48,7 +48,7 @@ export class RBAC {
         throw new BadRequestError("Invalid request!")
       }
 
-      if (userMembership.role == "MEMBER") {
+      if (userMembership.role === "MEMBER" || userMembership.role === "ADMIN") {
         const userMember = await prisma.projectMembers.findUnique({
           where: {
             projectId_userId: {

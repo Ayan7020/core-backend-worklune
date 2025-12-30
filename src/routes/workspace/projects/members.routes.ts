@@ -5,6 +5,6 @@ import express from "express";
 
 const router = express.Router();    
  
-router.post("/add-member",RBAC.workspaceRequireMinRole("MEMBER"),RBAC.projectRequiresMinRole("OWNER"),asyncHandler(ProjectMembers.addProjectMemeber));
+router.post("/add-member",RBAC.workspaceRequireMinRole("ADMIN"),asyncHandler(ProjectMembers.addProjectMemeber));
 
 export default router;

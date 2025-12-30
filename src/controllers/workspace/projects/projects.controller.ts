@@ -15,7 +15,7 @@ export class Projects {
         if (!userId || !workspaceId) {
             throw new BadRequestError("Invalid request!");
         }
- 
+
         await validatePlan({
             workspaceId,
             action: "CREATE_PROJECT",
@@ -25,6 +25,7 @@ export class Projects {
             data: {
                 name: createProjectsBody.name,
                 description: createProjectsBody.description,
+                color: createProjectsBody.projectColor,
                 workspaceId: workspaceId,
                 createdById: userId,
                 projectMembers: {
@@ -49,10 +50,10 @@ export class Projects {
         })
     }
 
-    public static getProjects = async (req: Request,res: Response) => {
+    public static getProjects = async (req: Request, res: Response) => {
         const userId = req.user?.id;
         const workspaceId = req.workspaceid as string;
-        if(!userId || !workspaceId) {
+        if (!userId || !workspaceId) {
             throw new BadRequestError();
         }
 
@@ -69,20 +70,43 @@ export class Projects {
                         tasks: true
                     }
                 },
+                projectMembers: {
+                    include: {
+                        user: {
+                            select: {
+                                name: true,
+                                email: true,
+                                avatarUrl: true
+                            },
+
+                        }
+                    }
+                },
                 createdBy: {
                     select: {
-                        name: true
+                        name: true,
                     }
                 }
             }
-        })
+        });
 
         projectsDataRefine = projectsData.map(pdata => ({
+            id: pdata.id,
             name: pdata.name,
             description: pdata.description,
+            color: pdata.color,
+            status: pdata.status,
             createdBy: pdata.createdBy.name,
+            createdAt: pdata.createdAt,
+            projectMembers: pdata.projectMembers.map(member => ({
+                name: member.user.name,
+                avatarUrl: member.user.avatarUrl,
+                email: member.user.email,
+                role: member.role
+            })),
             projectMemberCount: Number(pdata._count.projectMembers),
-            taskCount: Number(pdata._count.tasks)
+            taskCount: Number(pdata._count.tasks),
+            completedTaskCount: 0
         }));
 
         return res.status(200).json({

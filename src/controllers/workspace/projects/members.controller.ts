@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "@/services/prisma.service";
 import z from "zod";
-import { BadRequestError } from "@/utils/errors/HttpErrors";
+import { BadRequestError, ForbiddenError } from "@/utils/errors/HttpErrors";
 import { addMemberSchema } from "@/utils/schemas/members.schema";
 
 export class ProjectMembers {
@@ -10,7 +10,6 @@ export class ProjectMembers {
         const userId = req.user?.id
         const addMemberBody = z.parse(addMemberSchema, req.body);
         const workspaceId = req.query.workspaceId as string;
-
 
         if (!userId || !workspaceId) {
             throw new BadRequestError("Invalid request!");
@@ -27,6 +26,10 @@ export class ProjectMembers {
 
         if (!isWorkspaceMember) {
             throw new BadRequestError("Member doesn't exists in your workspace")
+        }
+
+        if(isWorkspaceMember.role === "OWNER") {
+            throw new ForbiddenError("The workspace owner cannot be added as a member.")
         }
 
         const projects = await prisma.projects.findUnique({
@@ -53,7 +56,7 @@ export class ProjectMembers {
         const ok = await prisma.projectMembers.create({
             data: {
                 projectId: addMemberBody.project_id,
-                userId: userId,
+                userId: addMemberBody.member_id,
                 role: addMemberBody.role,
             }
         });
@@ -67,6 +70,11 @@ export class ProjectMembers {
             message: "Project member added successfully",
         })
     }
+
+    public static changeProjectMemberStatus = async (req: Request, res: Response) => {
+
+    }
+
 
 }
 

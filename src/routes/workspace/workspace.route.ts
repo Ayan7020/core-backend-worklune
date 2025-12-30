@@ -8,6 +8,7 @@ const router = express.Router();
  
 router.post("/create-workspace",asyncHandler(WorkSpace.createWorkSpace));
  
-router.get("/get-workspace-member",RBAC.workspaceRequireMinRole("MEMBER"),asyncHandler(WorkspaceMember.getWorkSpaceMember));
+router.get("/get-workspace-member",RBAC.workspaceRequireMinRole("MEMBER"),asyncHandler(WorkspaceMember.getWorkSpaceMember)); 
+
 
 export default router;

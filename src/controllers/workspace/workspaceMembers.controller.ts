@@ -18,6 +18,7 @@ export class WorkspaceMember {
             include: {
                 user: {
                     select: {
+                        id: true,
                         name: true,
                         avatarUrl: true,
                         email: true,
@@ -41,7 +42,9 @@ export class WorkspaceMember {
         }
 
         const membersData = membershipData.map(memberData => ({
+            id: memberData.user.id,
             name: memberData.user.name,
+            avatarUrl: memberData.user.avatarUrl,
             email: memberData.user.email,
             role: memberData.role,
             joinedAt: memberData.createdAt,
