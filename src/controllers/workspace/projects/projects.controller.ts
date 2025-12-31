@@ -74,6 +74,7 @@ export class Projects {
                     include: {
                         user: {
                             select: {
+                                id: true,
                                 name: true,
                                 email: true,
                                 avatarUrl: true
@@ -99,6 +100,7 @@ export class Projects {
             createdBy: pdata.createdBy.name,
             createdAt: pdata.createdAt,
             projectMembers: pdata.projectMembers.map(member => ({
+                id: member.user.id,
                 name: member.user.name,
                 avatarUrl: member.user.avatarUrl,
                 email: member.user.email,
@@ -117,6 +119,7 @@ export class Projects {
             }
         })
     }
+
 
 }
 

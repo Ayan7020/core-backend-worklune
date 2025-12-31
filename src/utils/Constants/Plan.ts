@@ -2,8 +2,8 @@ import { PlanInterface } from "@/types/common";
 
 export const PLANS: PlanInterface = {
   FREE: {
-    maxUsers: 3,
-    maxProjects: 2,
+    maxUsers: 10,
+    maxProjects: 3,
     maxTasksPerProject: 50,
 
     aiRequestsPerDay: 5,
