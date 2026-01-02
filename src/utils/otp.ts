@@ -5,9 +5,9 @@ import { OTP_LUA_SCRIPT } from "./Constants/lua_script";
 import { OtpInterface } from "@/types/common";
 
 export class OtpService {
-  private static readonly OTP_TTL = 300;       // 5 min
-  private static readonly WINDOW_TTL = 300;    // 5 min
-  private static readonly BLOCK_TTL = 600;     // 10 min
+  private static readonly OTP_TTL = 300; // 5 min
+  private static readonly WINDOW_TTL = 300; // 5 min
+  private static readonly BLOCK_TTL = 600; // 10 min
   private static readonly MAX_ATTEMPTS = 3; // 3 max attempt in 5 min
   private static readonly OTP_COOLDOWN_TTL = 60; // 1 min of cool down
 
@@ -34,24 +34,24 @@ export class OtpService {
       this.OTP_COOLDOWN_TTL,
       payload.hash,
       payload.salt,
-      payload.retry_limit
+      payload.retry_limit,
     );
 
     if (result === "BLOCKED") {
       throw new TooManyRequestError("Too many requests", {
-        validationError: [{ field: "otp", message: "Account temporarily blocked" }]
+        validationError: [{ field: "otp", message: "Account temporarily blocked" }],
       });
     }
 
     if (result === "RATE_LIMIT") {
       throw new TooManyRequestError("Too many requests", {
-        validationError: [{ field: "otp", message: "OTP limit exceeded" }]
+        validationError: [{ field: "otp", message: "OTP limit exceeded" }],
       });
     }
 
     if (result === "COOL_DOWN") {
       throw new TooManyRequestError("Too many requests", {
-        validationError: [{ field: "otp", message: "Wait before requesting another OTP" }]
+        validationError: [{ field: "otp", message: "Wait before requesting another OTP" }],
       });
     }
 
@@ -82,5 +82,4 @@ export class OtpService {
 
     return remaining;
   }
-
 }

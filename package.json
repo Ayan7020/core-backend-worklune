@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register --env-file .env.development src/server.ts",
     "build": "tsc && tsc-alias",
-    "start": "node --env-file .env  dist/server.js"
+    "start": "node --env-file .env  dist/server.js",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier . --check",
+    "format:fix": "prettier . --write"
   },
   "keywords": [],
   "author": "",
@@ -45,6 +49,15 @@
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
-    "@types/pg": "^8.16.0"
+    "@types/pg": "^8.16.0",
+    "@typescript-eslint/eslint-plugin": "^8.11.0",
+    "@typescript-eslint/parser": "^8.11.0",
+    "eslint": "^9.11.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-simple-import-sort": "^12.1.0",
+    "prettier": "^3.4.1"
   }
 }

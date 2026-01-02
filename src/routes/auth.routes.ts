@@ -2,13 +2,13 @@ import { AuthService } from "@/controllers/auth.controllers";
 import { asyncHandler } from "@/utils/asyncHandler";
 import express from "express";
 
-const router = express.Router();    
+const router = express.Router();
 
 /**
  * @openapi
  * /auth/signup:
  *   post:
- *     summary: Signup in WorkLune 
+ *     summary: Signup in WorkLune
  *     tags:
  *       - Auth
  *     security:
@@ -29,7 +29,7 @@ const router = express.Router();
  *               email:
  *                 type: string
  *               password:
- *                 type: string 
+ *                 type: string
  *     responses:
  *       201:
  *         description: Authenticated!!
@@ -38,13 +38,13 @@ const router = express.Router();
  *       403:
  *         description: Forbidden
  */
-router.post("/signup",asyncHandler(AuthService.Signup))
+router.post("/signup", asyncHandler(AuthService.Signup));
 
 /**
  * @openapi
  * /auth/verify-otp:
  *   post:
- *     summary: Login in WorkLune 
+ *     summary: Login in WorkLune
  *     tags:
  *       - Auth
  *     security:
@@ -65,7 +65,7 @@ router.post("/signup",asyncHandler(AuthService.Signup))
  *               email:
  *                 type: string
  *               password:
- *                 type: string 
+ *                 type: string
  *     responses:
  *       201:
  *         description: Authenticated!!
@@ -74,13 +74,13 @@ router.post("/signup",asyncHandler(AuthService.Signup))
  *       403:
  *         description: Forbidden
  */
-router.post("/verify-otp",asyncHandler(AuthService.verifyOtpHandler));
+router.post("/verify-otp", asyncHandler(AuthService.verifyOtpHandler));
 
 /**
  * @openapi
  * /auth/login:
  *   post:
- *     summary: Login in WorkLune 
+ *     summary: Login in WorkLune
  *     tags:
  *       - Auth
  *     security:
@@ -101,7 +101,7 @@ router.post("/verify-otp",asyncHandler(AuthService.verifyOtpHandler));
  *               email:
  *                 type: string
  *               password:
- *                 type: string 
+ *                 type: string
  *     responses:
  *       201:
  *         description: Authenticated!!
@@ -110,8 +110,8 @@ router.post("/verify-otp",asyncHandler(AuthService.verifyOtpHandler));
  *       403:
  *         description: Forbidden
  */
-router.post("/login",asyncHandler(AuthService.Login));
+router.post("/login", asyncHandler(AuthService.Login));
 
-router.get("/refresh-token",asyncHandler(AuthService.refreshToken))
+router.get("/refresh-token", asyncHandler(AuthService.refreshToken));
 
 export default router;

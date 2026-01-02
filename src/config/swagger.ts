@@ -6,30 +6,30 @@ const options: swaggerJsdoc.Options = {
     info: {
       title: "WorkLune API",
       version: "1.0.0",
-      description: "Multi-tenant task management API"
+      description: "Multi-tenant task management API",
     },
     servers: [
       {
         url: `http://localhost:${process.env.PORT}`,
-        description: "Local server"
-      }
+        description: "Local server",
+      },
     ],
     components: {
       securitySchemes: {
         bearerAuth: {
           type: "http",
           scheme: "bearer",
-          bearerFormat: "JWT"
-        }
-      }
+          bearerFormat: "JWT",
+        },
+      },
     },
     security: [
       {
-        bearerAuth: []
-      }
-    ]
+        bearerAuth: [],
+      },
+    ],
   },
-  apis: ["./src/routes/*.ts"]  
+  apis: ["./src/routes/*.ts"],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);

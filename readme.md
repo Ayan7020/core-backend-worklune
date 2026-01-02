@@ -1,6 +1,5 @@
 # WorkLune Backend Core
 
-
 ## Features
 
 - 🚀 **Express.js** - Fast, minimalist web framework
@@ -20,12 +19,14 @@
 ## Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <repository-url>
 cd backend-core-worklune
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
@@ -43,6 +44,7 @@ REDIS_PASSWORD=abc$1289
 ```
 
 4. Start Redis using Docker Compose:
+
 ```bash
 docker-compose up -d
 ```
@@ -126,16 +128,19 @@ The project uses Redis 7 Alpine for caching and session management:
 - **Data Persistence:** Enabled with AOF (Append-Only File)
 
 Start Redis:
+
 ```bash
 docker-compose up -d worklune-redis
 ```
 
 Stop Redis:
+
 ```bash
 docker-compose down
 ```
 
 View Redis logs:
+
 ```bash
 docker-compose logs -f worklune-redis
 ```

@@ -14,7 +14,7 @@ export const PLANS: PlanInterface = {
 
     canInviteUsers: true,
     canExportData: false,
-    canAccessAuditLogs: false
+    canAccessAuditLogs: false,
   },
 
   PRO: {
@@ -30,7 +30,7 @@ export const PLANS: PlanInterface = {
 
     canInviteUsers: true,
     canExportData: true,
-    canAccessAuditLogs: true
+    canAccessAuditLogs: true,
   },
 
   ENTERPRISE: {
@@ -46,6 +46,6 @@ export const PLANS: PlanInterface = {
 
     canInviteUsers: true,
     canExportData: true,
-    canAccessAuditLogs: true
-  }
+    canAccessAuditLogs: true,
+  },
 };

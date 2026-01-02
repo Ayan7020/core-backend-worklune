@@ -4,11 +4,14 @@ import { RBAC } from "@/lib/middleware/dashboard/rbac.middleware";
 import { asyncHandler } from "@/utils/asyncHandler";
 import express from "express";
 
-const router = express.Router();    
- 
-router.post("/create-workspace",asyncHandler(WorkSpace.createWorkSpace));
- 
-router.get("/get-workspace-member",RBAC.workspaceRequireMinRole("MEMBER"),asyncHandler(WorkspaceMember.getWorkSpaceMember)); 
+const router = express.Router();
 
+router.post("/create-workspace", asyncHandler(WorkSpace.createWorkSpace));
+
+router.get(
+  "/get-workspace-member",
+  RBAC.workspaceRequireMinRole("MEMBER"),
+  asyncHandler(WorkspaceMember.getWorkSpaceMember),
+);
 
 export default router;

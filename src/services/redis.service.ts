@@ -1,21 +1,21 @@
 import Redis from "ioredis";
 
 if (!process.env.REDIS_URL) {
-    throw new Error("REDIS_URL is not defined");
+  throw new Error("REDIS_URL is not defined");
 }
 
 const redisClient = new Redis(process.env.REDIS_URL, {
-    maxRetriesPerRequest: Number(process.env.REDIS_MAX_RETRIES ?? 3),
-    connectTimeout: Number(process.env.REDIS_CONNECT_TIMEOUT ?? 10_000),
-    enableReadyCheck: true,
-    lazyConnect: false,
+  maxRetriesPerRequest: Number(process.env.REDIS_MAX_RETRIES ?? 3),
+  connectTimeout: Number(process.env.REDIS_CONNECT_TIMEOUT ?? 10_000),
+  enableReadyCheck: true,
+  lazyConnect: false,
 
-    retryStrategy(times) {
-        const delay = Math.min(times * 50, 2000);
-        return delay;
-    }
+  retryStrategy(times) {
+    const delay = Math.min(times * 50, 2000);
+    return delay;
+  },
 });
- 
+
 redisClient.on("connect", () => {
   console.info("Redis connected");
 });

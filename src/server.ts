@@ -11,11 +11,11 @@ const PORT = Number(process.env.PORT) || 4000;
 let server: http.Server;
 
 const startServer = async () => {
-  try { 
+  try {
     await prisma.$connect();
     await prisma.$queryRaw`SELECT 1`;
     console.log("Database connected");
-    
+
     await OtpQueueService.connect();
 
     server = app.listen(PORT, () => {
@@ -32,7 +32,7 @@ const shutdown = async (signal: string) => {
 
   if (server) {
     server.close(async () => {
-      console.log("HTTP server closed");   
+      console.log("HTTP server closed");
 
       await prisma.$disconnect();
       console.log("Prisma disconnected");
@@ -46,10 +46,10 @@ const shutdown = async (signal: string) => {
     process.exit(0);
   }
 };
- 
+
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
- 
+
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
   process.exit(1);

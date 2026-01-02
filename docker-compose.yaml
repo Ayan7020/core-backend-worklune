@@ -1,27 +1,27 @@
 services:
-  worklune-redis: 
-      image: redis:7-alpine
-      container_name: worklune-redis
-      command: >
-        redis-server
-        --requirepass abc$1289
-        --appendonly yes
-      ports:
-        - "6379:6379"
-      volumes:
+  worklune-redis:
+    image: redis:7-alpine
+    container_name: worklune-redis
+    command: >
+      redis-server
+      --requirepass abc$1289
+      --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
       - redis_data:/data
-      restart: unless-stopped
+    restart: unless-stopped
 
   redis-insight:
     image: redis/redisinsight:latest
     restart: always
     ports:
-      - "5540:5540" 
+      - "5540:5540"
     volumes:
-      - redis-insight-data:/data  
+      - redis-insight-data:/data
     depends_on:
       - worklune-redis
-  
+
   worklune-pgDb:
     image: postgres:14.20-alpine
     container_name: worklune-pgDb
@@ -38,9 +38,9 @@ services:
   adminer:
     image: adminer
     restart: always
-    ports:  
+    ports:
       - 8080:8080
-  
+
   worklune-mq:
     image: rabbitmq:latest
     container_name: worklune-mq
@@ -60,10 +60,10 @@ services:
 
 configs:
   rabbitmq-plugins:
-    content: "[rabbitmq_management]." 
+    content: "[rabbitmq_management]."
 
 volumes:
-  redis_data:  
+  redis_data:
   pgsql_data:
   redis-insight-data:
   rabbitmq-lib:
