@@ -1,6 +1,6 @@
 import { prisma } from "@/services/prisma.service";
 import { PROJECT_ROLE_ORDER, WORKSPACE_ROLE_ORDER } from "@/utils/Constants/guard";
-import { BadRequestError, ForbiddenError } from "@/utils/errors/HttpErrors";
+import { BadRequestError, ConflictError, ForbiddenError } from "@/utils/errors/HttpErrors";
 import type { Membership } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 
@@ -10,7 +10,7 @@ type ProjectRole = keyof typeof PROJECT_ROLE_ORDER;
 const WORKSPACE_ID_BODY_KEYS = ["workspaceId", "workspace_id", "workspace"];
 const PROJECT_ID_BODY_KEYS = ["projectId", "project_id", "project"];
 
-const coerceIdentifier = (value: unknown): string | undefined => {
+const coerceIdentifier = (value: unknown): string | undefined => { 
   if (Array.isArray(value)) {
     return coerceIdentifier(value[0]);
   }
@@ -58,19 +58,17 @@ const resolveWorkspaceId = (req: Request): string | undefined => {
   );
 };
 
-const resolveProjectId = (req: Request): string | undefined => {
-  const projectEntity = extractFromBody(req.body, "project");
+const resolveProjectId = (req: Request): string | undefined => { 
   const fromBody = PROJECT_ID_BODY_KEYS.map((key) =>
     coerceIdentifier(extractFromBody(req.body, key)),
-  ).find(Boolean);
+  ).find(Boolean); 
 
+  const inquery = req.query.projectId
   return (
-    req.projectId ??
-    String(req.query.projectId) ??
+    req.projectId ?? 
     coerceIdentifier(req.params?.projectId) ??
     coerceIdentifier(req.query.projectId) ??
-    fromBody ??
-    maybeExtractEntityId(projectEntity)
+    fromBody  
   );
 };
 
@@ -132,7 +130,7 @@ export class RBAC {
     };
   }
 
-  static  projectRequiresMinRole(minRole: ProjectRole, allowWorkspaceOverride: boolean = false) {
+  static projectRequiresMinRole(minRole: ProjectRole, allowWorkspaceOverride: boolean = false) {
     return async (req: Request, _res: Response, next: NextFunction) => {
       const userId = req.user?.id;
 
@@ -151,7 +149,23 @@ export class RBAC {
       if (!membership) {
         throw new ForbiddenError("You are not a member of this workspace");
       }
+      const projectId = resolveProjectId(req);
+      console.log("projectId")
 
+      if (!projectId || typeof projectId === "undefined" || projectId === "undefined") {
+        throw new BadRequestError("Project context is missing");
+      }
+
+      const workspaceProject = await prisma.projects.findFirst({
+        where: {
+          workspaceId: membership.workspaceId,
+          id: projectId
+        }
+      });
+
+      if (!workspaceProject) {
+        throw new ConflictError("The project is not belongs to the workspace!")
+      }
       persistWorkspaceContext(req, workspaceId, membership);
 
       const bypassProjectChecks =
@@ -161,11 +175,6 @@ export class RBAC {
         return next();
       }
 
-      const projectId = resolveProjectId(req);
-
-      if (!projectId) {
-        throw new BadRequestError("Project context is missing");
-      }
 
       const projectMember = await prisma.projectMembers.findUnique({
         where: {
