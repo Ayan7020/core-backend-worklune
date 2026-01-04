@@ -14,7 +14,13 @@ router.post(
 router.get(
   "/get-project",
   RBAC.workspaceRequireMinRole("MEMBER"),
-  asyncHandler(Projects.getProjects),
+  asyncHandler(Projects.getProjectsMetaData),
+);
+router.get(
+  "/get-project-details",
+  RBAC.workspaceRequireMinRole("MEMBER"),
+  RBAC.projectRequiresMinRole("MEMBER",true),
+  asyncHandler(Projects.getProjectDetailsByID),
 );
 
 router.use("/members", ProjectsMemberRoutes);

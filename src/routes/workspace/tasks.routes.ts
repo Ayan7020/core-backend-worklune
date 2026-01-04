@@ -13,8 +13,7 @@ router.post(
 );
 router.get(
   "/get-task",
-  RBAC.workspaceRequireMinRole("MEMBER"),
-  RBAC.projectRequiresMinRole("MAINTAINER", true),
+  RBAC.workspaceRequireMinRole("MEMBER"), 
   asyncHandler(Task.getTask),
 );
 

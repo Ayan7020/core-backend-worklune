@@ -48,7 +48,7 @@ export class Projects {
     });
   };
 
-  public static getProjects = async (req: Request, res: Response) => {
+  public static getProjectsMetaData = async (req: Request, res: Response) => {
     const userId = req.user?.id;
     const workspaceId = req.workspaceId;
     if (!userId || !workspaceId) {
@@ -114,4 +114,92 @@ export class Projects {
       },
     });
   };
+
+
+ 
+  public static getProjectDetailsByID = async (req: Request, res: Response) => {
+    const userId = req.user?.id;
+    const membership = req.membership;
+    const workspaceId = req.workspaceId;
+    const projectId = req.query.projectId as string;
+    
+    if (!userId || !membership || !workspaceId || !projectId) { 
+      throw new BadRequestError("Invalid request");
+    }
+
+    const projectsDetails = await prisma.projects.findUnique({
+      where: {
+        id: projectId,
+      },
+      include: {
+        _count: {
+          select: {
+            projectMembers: true,
+            tasks: true,
+          },
+        },
+        projectMembers: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+        tasks: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            tag: true,
+            priority: true,
+            status: true,
+            assigneeId: true,
+            createdById: true,
+          }
+        },
+        createdBy: {
+          select: {
+            name: true,
+          },
+        },
+      }
+    });
+
+    if (!projectsDetails) {
+      throw new BadRequestError("Invalid project id!")
+    };
+
+
+    return res.status(200).json({
+      success: true,
+      message: "Projects Data",
+      data: {
+        projectsDetails: {
+          id: projectsDetails.id,
+          name: projectsDetails.name,
+          description: projectsDetails.description,
+          color: projectsDetails.color,
+          status: projectsDetails.status,
+          createdBy: projectsDetails.createdBy.name,
+          createdAt: projectsDetails.createdAt,
+          projectMembers: projectsDetails.projectMembers.map((member) => ({
+            id: member.user.id,
+            name: member.user.name,
+            avatarUrl: member.user.avatarUrl,
+            email: member.user.email,
+            role: member.role,
+          })),
+          projectMemberCount: Number(projectsDetails._count.projectMembers),
+          taskCount: Number(projectsDetails._count.tasks),
+          completedTaskCount: 0,
+          taskData: projectsDetails.tasks
+        }
+      }
+    })
+  }
 }

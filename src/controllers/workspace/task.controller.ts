@@ -77,51 +77,93 @@ export class Task {
     if (!userId || !membership || !workspaceId) {
       throw new BadRequestError("Invalid request");
     }
-    let userTaskData = [];
-    // if (membership.role === "ADMIN" || membership.role === "OWNER") {
-    userTaskData = await prisma.projects.findMany({
-      where: {
-        workspaceId: workspaceId,
-      },
-      include: {
-        projectMembers: {
-          where: {
-            userId: userId,
-          },
-          select: {
-            role: true,
-          },
-          take: 1,
-        },
-        tasks: {
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            tag: true,
-            priority: true,
-            status: true,
-            assigneeId: true,
-            createdById: true,
-          },
-        },
-      },
-    });
-    // }
+    const isWorkspaceManager = membership.role === "ADMIN" || membership.role === "OWNER";
 
-    userTaskData = userTaskData.map((data) => ({
-      projectId: data.id,
-      name: data.name,
-      userRole: data.projectMembers[0].role,
-      task: data.tasks,
-    }));
+    const taskSelection = {
+      id: true,
+      title: true,
+      description: true,
+      tag: true,
+      priority: true,
+      status: true,
+      assigneeId: true,
+      createdById: true,
+    } as const;
+
+    const selectProjectShape = {
+      id: true,
+      name: true,
+      color: true,
+      projectMembers: {
+        where: {
+          userId,
+        },
+        select: {
+          role: true,
+        },
+        take: 1,
+      },
+    } as const;
+
+    const managerProjects = async () =>
+      prisma.projects.findMany({
+        where: { workspaceId },
+        select: {
+          ...selectProjectShape,
+          tasks: {
+            select: taskSelection,
+          },
+        },
+      });
+
+    const memberProjects = async () =>
+      prisma.projects.findMany({
+        where: {
+          workspaceId,
+          projectMembers: {
+            some: {
+              userId
+            }
+          }
+        },
+        select: {
+          ...selectProjectShape,
+          tasks: {
+            select: taskSelection,
+          },
+        },
+      });
+
+    const projects = await (isWorkspaceManager ? managerProjects() : memberProjects());
+
+    const taskData = projects
+      .map((project) => ({
+        projectId: project.id,
+        name: project.name,
+        color: project.color,
+        userRole: project.projectMembers[0]?.role ?? null,
+        tasks: project.tasks,
+      }))
+    //   .filter((project) => project.tasks.length > 0);
 
     return res.status(200).json({
       success: true,
       message: "data found",
       data: {
-        taksData: userTaskData,
+        taksData: taskData,
       },
     });
+  }
+
+  public static async getTaskDetails(req: Request, res: Response) {
+    const userId = req.user?.id;
+    const membership = req.membership;
+    const workspaceId = req.workspaceId;
+    const taskId = req.query.taskId as string;
+    if (!userId || !membership || !workspaceId || !taskId) {
+      throw new BadRequestError("Invalid request");
+    }
+
+    
   }
 }

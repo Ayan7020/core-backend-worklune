@@ -66,6 +66,7 @@ const resolveProjectId = (req: Request): string | undefined => {
 
   return (
     req.projectId ??
+    String(req.query.projectId) ??
     coerceIdentifier(req.params?.projectId) ??
     coerceIdentifier(req.query.projectId) ??
     fromBody ??
@@ -131,7 +132,7 @@ export class RBAC {
     };
   }
 
-  static projectRequiresMinRole(minRole: ProjectRole, allowWorkspaceOverride: boolean = false) {
+  static  projectRequiresMinRole(minRole: ProjectRole, allowWorkspaceOverride: boolean = false) {
     return async (req: Request, _res: Response, next: NextFunction) => {
       const userId = req.user?.id;
 
