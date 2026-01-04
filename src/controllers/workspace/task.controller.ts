@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { BadRequestError } from "@/utils/errors/HttpErrors";
 import { createTasksSchema } from "@/utils/schemas/task.schema";
 import { prisma } from "@/services/prisma.service";
+import { title } from "process";
 
 export class Task {
   public static async createTask(req: Request, res: Response) {
@@ -164,6 +165,59 @@ export class Task {
       throw new BadRequestError("Invalid request");
     }
 
-    
+    const taskSelection = {
+      id: true,
+      title: true,
+      description: true,
+      tag: true,
+      priority: true,
+      status: true, 
+    } as const;
+
+    const taskData = await prisma.task.findUnique({
+      where: {
+        id: taskId
+      },
+      select: {
+        ...taskSelection,
+        assignuser: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true
+          }
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true
+          }
+        },
+        taskDescussions: {
+          include: {
+            user: {
+              select: {
+                name: true,
+                avatarUrl: true
+              }
+            }
+          }
+        }
+      }
+    });
+    if (!taskData) {
+      throw new BadRequestError("Task Details not found")
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Task Details",
+      data: {
+        taskDetails: taskData
+      }
+    })
   }
 }

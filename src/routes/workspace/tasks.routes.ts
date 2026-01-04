@@ -16,5 +16,11 @@ router.get(
   RBAC.workspaceRequireMinRole("MEMBER"), 
   asyncHandler(Task.getTask),
 );
+router.get(
+  "/get-taskDetails",
+  RBAC.workspaceRequireMinRole("MEMBER"),
+  RBAC.projectRequiresMinRole("MEMBER",true),
+  asyncHandler(Task.getTaskDetails)
+)
 
 export default router;

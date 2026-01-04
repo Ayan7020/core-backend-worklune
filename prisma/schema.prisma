@@ -26,8 +26,10 @@ model User {
   projects          Projects[]
   projectMembers    ProjectMembers[]
   invitations       Invitation[]
-  tasks             Task[]
+  tasks             Task[] @relation("TaskCreator")
+  assignTask        Task[] @relation("TaskAssignee")
   userSetting       UserSetting?
+  taskDescussions   TaskDiscussion[]
 }
 
 model UserSetting {
@@ -172,8 +174,25 @@ model Task {
 
   priority TaskPriority
 
-  user     User     @relation(fields: [createdById], references: [id])
-  projects Projects @relation(fields: [projectId], references: [id])
+  user            User             @relation("TaskCreator",fields: [createdById], references: [id])
+  assignuser      User             @relation("TaskAssignee",fields: [assigneeId], references: [id])
+  projects        Projects         @relation(fields: [projectId], references: [id])
+  taskDescussions TaskDiscussion[]
+}
+
+model TaskDiscussion {
+  id String @id @default(uuid())
+
+  taskId    String
+  createdBy String
+  content   String
+
+  createdAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id])
+  user User @relation(fields: [createdBy], references: [id])
+
+  @@index([taskId, createdAt])
 }
 
 enum ProjectColor {

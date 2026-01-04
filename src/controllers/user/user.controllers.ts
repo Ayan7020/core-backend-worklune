@@ -12,6 +12,7 @@ export class User {
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
       select: {
+        id: true,
         name: true,
         email: true,
         avatarUrl: true,
@@ -50,6 +51,7 @@ export class User {
       message: "user data found",
       data: {
         userData: {
+          id: existingUser.id,
           name: existingUser.name,
           email: existingUser.email,
           avatarUrl: existingUser.avatarUrl,
