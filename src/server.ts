@@ -32,6 +32,7 @@ const parseAllowedOrigins = (): string[] | undefined => {
 const attachWebSocketServer = (httpServer: http.Server) => {
   const corsConfig: socketIo.ServerOptions["cors"] = {
     credentials: true,
+    
   };
 
   const origins = parseAllowedOrigins();
