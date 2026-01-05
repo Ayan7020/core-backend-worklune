@@ -57,7 +57,7 @@ export const onConnectSocket = (socket: Socket, io: Server) => {
                 }
             }
         });
-
+                
         io.to(`task:${taskId}`).emit("task:comment:new",{
             id: tasks.id,
             content: tasks.content,

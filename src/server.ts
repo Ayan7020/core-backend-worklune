@@ -32,7 +32,6 @@ const parseAllowedOrigins = (): string[] | undefined => {
 const attachWebSocketServer = (httpServer: http.Server) => {
   const corsConfig: socketIo.ServerOptions["cors"] = {
     credentials: true,
-    
   };
 
   const origins = parseAllowedOrigins();
@@ -107,14 +106,18 @@ const startServer = async () => {
         return next(new Error("Unauthorized"));
       }
 
-      // const payload = Jwt.verify(
-      //   token,
-      //   process.env.JWT_SECRET!
-      // ) as { userId: string };
-
-      socket.data.userId = token;
+      const payload = Jwt.verify(
+        token,
+        process.env.JWT_SECRET!
+      ) as {
+        userId: string,
+        iat: number,
+        exp: number
+      } 
+      socket.data.userId = payload.userId; 
       next();
-    })
+    });
+
     server = httpServer.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });

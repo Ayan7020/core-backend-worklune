@@ -1,8 +1,7 @@
 import { Request, Response } from "express";
 import { BadRequestError } from "@/utils/errors/HttpErrors";
 import { createTasksSchema } from "@/utils/schemas/task.schema";
-import { prisma } from "@/services/prisma.service";
-import { title } from "process";
+import { prisma } from "@/services/prisma.service"; 
 
 export class Task {
   public static async createTask(req: Request, res: Response) {
@@ -17,33 +16,13 @@ export class Task {
     if (!projectId) {
       throw new BadRequestError("Project context missing");
     }
-
-    const userProjectRole = await prisma.projectMembers.findUnique({
-      where: {
-        projectId_userId: {
-          projectId,
-          userId,
-        },
-      },
-      select: {
-        role: true,
-      },
-    });
-
-    if (!userProjectRole) {
-      throw new BadRequestError("User is not a member of this project");
-    }
-
-    let assigneeId = userId;
-    if (userProjectRole.role !== "MEMBER") {
-      assigneeId = createTaskBody.user_assign_id;
-    }
+ 
 
     const assigneeProjectMember = await prisma.projectMembers.findUnique({
       where: {
         projectId_userId: {
           projectId,
-          userId: assigneeId,
+          userId: createTaskBody.user_assign_id,
         },
       },
     });
@@ -54,7 +33,7 @@ export class Task {
 
     await prisma.task.create({
       data: {
-        assigneeId: assigneeId,
+        assigneeId: createTaskBody.user_assign_id,
         projectId,
         createdById: userId,
         title: createTaskBody.task_title,
