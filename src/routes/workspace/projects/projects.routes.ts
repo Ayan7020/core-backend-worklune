@@ -19,7 +19,7 @@ router.get(
 router.get(
   "/get-project-details",
   RBAC.workspaceRequireMinRole("MEMBER"),
-  RBAC.projectRequiresMinRole("MEMBER",true),
+  RBAC.projectRequiresMinRole("MEMBER", true),
   asyncHandler(Projects.getProjectDetailsByID),
 );
 

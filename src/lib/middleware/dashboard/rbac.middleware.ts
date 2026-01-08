@@ -10,7 +10,7 @@ type ProjectRole = keyof typeof PROJECT_ROLE_ORDER;
 const WORKSPACE_ID_BODY_KEYS = ["workspaceId", "workspace_id", "workspace"];
 const PROJECT_ID_BODY_KEYS = ["projectId", "project_id", "project"];
 
-const coerceIdentifier = (value: unknown): string | undefined => { 
+const coerceIdentifier = (value: unknown): string | undefined => {
   if (Array.isArray(value)) {
     return coerceIdentifier(value[0]);
   }
@@ -58,17 +58,17 @@ const resolveWorkspaceId = (req: Request): string | undefined => {
   );
 };
 
-const resolveProjectId = (req: Request): string | undefined => { 
+const resolveProjectId = (req: Request): string | undefined => {
   const fromBody = PROJECT_ID_BODY_KEYS.map((key) =>
     coerceIdentifier(extractFromBody(req.body, key)),
-  ).find(Boolean); 
+  ).find(Boolean);
 
-  const inquery = req.query.projectId
+  const inquery = req.query.projectId;
   return (
-    req.projectId ?? 
+    req.projectId ??
     coerceIdentifier(req.params?.projectId) ??
     coerceIdentifier(req.query.projectId) ??
-    fromBody  
+    fromBody
   );
 };
 
@@ -150,7 +150,7 @@ export class RBAC {
         throw new ForbiddenError("You are not a member of this workspace");
       }
       const projectId = resolveProjectId(req);
-      console.log("projectId")
+      console.log("projectId");
 
       if (!projectId || typeof projectId === "undefined" || projectId === "undefined") {
         throw new BadRequestError("Project context is missing");
@@ -159,12 +159,12 @@ export class RBAC {
       const workspaceProject = await prisma.projects.findFirst({
         where: {
           workspaceId: membership.workspaceId,
-          id: projectId
-        }
+          id: projectId,
+        },
       });
 
       if (!workspaceProject) {
-        throw new ConflictError("The project is not belongs to the workspace!")
+        throw new ConflictError("The project is not belongs to the workspace!");
       }
       persistWorkspaceContext(req, workspaceId, membership);
 
@@ -174,7 +174,6 @@ export class RBAC {
       if (bypassProjectChecks) {
         return next();
       }
-
 
       const projectMember = await prisma.projectMembers.findUnique({
         where: {

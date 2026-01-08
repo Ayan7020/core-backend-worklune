@@ -16,6 +16,7 @@ declare module "express-serve-static-core" {
     workspaceid?: string;
     projectId?: string;
     projectRole?: ProjectRole;
+    taskId?: string;
     cookies: {
       access_token?: string;
       refresh_token?: string;

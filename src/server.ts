@@ -106,15 +106,12 @@ const startServer = async () => {
         return next(new Error("Unauthorized"));
       }
 
-      const payload = Jwt.verify(
-        token,
-        process.env.JWT_SECRET!
-      ) as {
-        userId: string,
-        iat: number,
-        exp: number
-      } 
-      socket.data.userId = payload.userId; 
+      const payload = Jwt.verify(token, process.env.JWT_SECRET!) as {
+        userId: string;
+        iat: number;
+        exp: number;
+      };
+      socket.data.userId = payload.userId;
       next();
     });
 

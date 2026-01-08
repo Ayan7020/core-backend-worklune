@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { BadRequestError } from "@/utils/errors/HttpErrors";
 import { createTasksSchema } from "@/utils/schemas/task.schema";
-import { prisma } from "@/services/prisma.service"; 
+import { prisma } from "@/services/prisma.service";
 
 export class Task {
   public static async createTask(req: Request, res: Response) {
@@ -16,7 +16,6 @@ export class Task {
     if (!projectId) {
       throw new BadRequestError("Project context missing");
     }
- 
 
     const assigneeProjectMember = await prisma.projectMembers.findUnique({
       where: {
@@ -102,9 +101,9 @@ export class Task {
           workspaceId,
           projectMembers: {
             some: {
-              userId
-            }
-          }
+              userId,
+            },
+          },
         },
         select: {
           ...selectProjectShape,
@@ -116,14 +115,13 @@ export class Task {
 
     const projects = await (isWorkspaceManager ? managerProjects() : memberProjects());
 
-    const taskData = projects
-      .map((project) => ({
-        projectId: project.id,
-        name: project.name,
-        color: project.color,
-        userRole: project.projectMembers[0]?.role ?? null,
-        tasks: project.tasks,
-      }))
+    const taskData = projects.map((project) => ({
+      projectId: project.id,
+      name: project.name,
+      color: project.color,
+      userRole: project.projectMembers[0]?.role ?? null,
+      tasks: project.tasks,
+    }));
     //   .filter((project) => project.tasks.length > 0);
 
     return res.status(200).json({
@@ -150,12 +148,12 @@ export class Task {
       description: true,
       tag: true,
       priority: true,
-      status: true, 
+      status: true,
     } as const;
 
     const taskData = await prisma.task.findUnique({
       where: {
-        id: taskId
+        id: taskId,
       },
       select: {
         ...taskSelection,
@@ -164,39 +162,39 @@ export class Task {
             id: true,
             name: true,
             email: true,
-            avatarUrl: true
-          }
+            avatarUrl: true,
+          },
         },
         user: {
           select: {
             id: true,
             name: true,
             email: true,
-            avatarUrl: true
-          }
+            avatarUrl: true,
+          },
         },
         taskDescussions: {
           include: {
             user: {
               select: {
                 name: true,
-                avatarUrl: true
-              }
-            }
-          }
-        }
-      }
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+      },
     });
     if (!taskData) {
-      throw new BadRequestError("Task Details not found")
+      throw new BadRequestError("Task Details not found");
     }
 
     return res.status(200).json({
       success: true,
       message: "Task Details",
       data: {
-        taskDetails: taskData
-      }
-    })
+        taskDetails: taskData,
+      },
+    });
   }
 }

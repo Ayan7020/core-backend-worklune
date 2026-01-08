@@ -115,15 +115,13 @@ export class Projects {
     });
   };
 
-
- 
   public static getProjectDetailsByID = async (req: Request, res: Response) => {
     const userId = req.user?.id;
     const membership = req.membership;
     const workspaceId = req.workspaceId;
     const projectId = req.query.projectId as string;
-    
-    if (!userId || !membership || !workspaceId || !projectId) { 
+
+    if (!userId || !membership || !workspaceId || !projectId) {
       throw new BadRequestError("Invalid request");
     }
 
@@ -160,20 +158,19 @@ export class Projects {
             status: true,
             assigneeId: true,
             createdById: true,
-          }
+          },
         },
         createdBy: {
           select: {
             name: true,
           },
         },
-      }
+      },
     });
 
     if (!projectsDetails) {
-      throw new BadRequestError("Invalid project id!")
-    };
-
+      throw new BadRequestError("Invalid project id!");
+    }
 
     return res.status(200).json({
       success: true,
@@ -197,9 +194,9 @@ export class Projects {
           projectMemberCount: Number(projectsDetails._count.projectMembers),
           taskCount: Number(projectsDetails._count.tasks),
           completedTaskCount: 0,
-          taskData: projectsDetails.tasks
-        }
-      }
-    })
-  }
+          taskData: projectsDetails.tasks,
+        },
+      },
+    });
+  };
 }

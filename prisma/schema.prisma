@@ -26,10 +26,11 @@ model User {
   projects          Projects[]
   projectMembers    ProjectMembers[]
   invitations       Invitation[]
-  tasks             Task[] @relation("TaskCreator")
-  assignTask        Task[] @relation("TaskAssignee")
+  tasks             Task[]           @relation("TaskCreator")
+  assignTask        Task[]           @relation("TaskAssignee")
   userSetting       UserSetting?
   taskDescussions   TaskDiscussion[]
+  subTasks          SubTask[]
 }
 
 model UserSetting {
@@ -174,10 +175,11 @@ model Task {
 
   priority TaskPriority
 
-  user            User             @relation("TaskCreator",fields: [createdById], references: [id])
-  assignuser      User             @relation("TaskAssignee",fields: [assigneeId], references: [id])
+  user            User             @relation("TaskCreator", fields: [createdById], references: [id])
+  assignuser      User             @relation("TaskAssignee", fields: [assigneeId], references: [id])
   projects        Projects         @relation(fields: [projectId], references: [id])
   taskDescussions TaskDiscussion[]
+  subtask         SubTask[]
 }
 
 model TaskDiscussion {
@@ -193,6 +195,24 @@ model TaskDiscussion {
   user User @relation(fields: [createdBy], references: [id])
 
   @@index([taskId, createdAt])
+}
+
+model SubTask {
+  id          String @id @default(uuid())
+  taskId      String
+  createdById String
+  title       String
+  order       Int
+
+  status      SubTaskStatus @default(INCOMPLETE)
+  reOpenAt    DateTime?
+  completedAt DateTime?
+  createdAt   DateTime      @default(now())
+
+  user User @relation(fields: [taskId], references: [id])
+  task Task @relation(fields: [createdById], references: [id])
+
+  @@unique([title,taskId])
 }
 
 enum ProjectColor {
@@ -254,4 +274,9 @@ enum TaskPriority {
   URGENT
   HIGH
   LOW
+}
+
+enum SubTaskStatus {
+  COMPLETED
+  INCOMPLETE
 }

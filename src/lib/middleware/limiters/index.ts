@@ -20,13 +20,13 @@ export const RateLimit = asyncHandler(async (req: Request, res: Response, next: 
         const payload = verifyAccessToken(access_token);
         const userId = String(payload.sub);
         await userLimiter.consume(userId, 1);
-      } catch (err) { 
+      } catch (err) {
         await anomLimiter.consume(ip, 1);
       }
     } else {
       await anomLimiter.consume(ip, 1);
-    } 
-    
+    }
+
     await globalLimiter.removeTokens(1);
 
     next();
